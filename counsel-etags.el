@@ -99,6 +99,7 @@
     "GRTAGS"
     "cscope.files"
     ;; html/javascript/css
+    "*bundle.js"
     "*min.js"
     "*min.css"
     ;; Images
