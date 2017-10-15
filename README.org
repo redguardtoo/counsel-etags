@@ -1,13 +1,13 @@
-* counsel-etags (v1.1.7)
+* counsel-etags (v1.1.8)
 
-Fast and complete Ctags solution in Emacs.
+Fast and complete Ctags solution using ivy-completion.
 
 It's tested in huge projects like Linux Kernel source.
 
-It's still usable even with *one million* candidates.
+Usable even with *one million* candidates.
 
 * Install
-Place counsel-etags.el somewhere (say ~/.emacs/lisp), add below code into ".emacs":
+Place counsel-etags.el somewhere (say ~/.emacs/lisp), add below code into =.emacs=:
 
 #+begin_src elisp
 (add-to-list 'load-path "~/.emacs.d/lisp/")
@@ -20,20 +20,25 @@ Run =M-x counsel-etags-find-tag-at-point= to navigate in code files without any 
 This command will:
 - find project root folder and scan code *automatically*
 - find correct tag *automatically*
-- if no tag is find, it grep *automatically*
+- if no tag is find, it runs =ripgrep= or =grep= *automatically*
 
 That's it.
 
-If you prefer manually setup tags file. You only need run =M-x counsel-etags-scan-code= once.
+If you prefer manually setup tags file. You only need run =M-x counsel-etags-scan-code= once or create tags file in your own way.
 * Tips (OPTIONAL)
 ** tags-file-name
-We try to automatically setup Emacs global variable =tags-file-name= if it's nil.
+We try to setup Emacs global variable =tags-file-name= if it's nil.
 
 If it's not nil, we respect =tags-file-name=. Please note we don't support =tags-table-list=.
 ** Auto update tags file
 #+begin_src
-(add-hook 'after-save-hook 'counsel-etags-update-tags-file)
+(add-hook 'after-save-hook 'counsel-etags-virtual-update-tags)
 (setq counsel-etags-update-interval 300) ; 300 seconds, OPTIONAL
+#+end_src
+
+You can set up callback =counsel-etags-update-tags-backend= to create/update tags file using your own solution instead =counsel-etags=,
+#+begin_src elisp
+(setq counsel-etags-update-tags-backend (lambda () (shell-command "find . -type f -iname \"*.[ch]\" | etags -")))
 #+end_src
 ** Ctags setup
 Google "filetype:ctags site:github.com". Here is [[https://gist.github.com/redguardtoo/b12ddae3b8010a276e9b][mine]].
@@ -48,8 +53,8 @@ You can also press =C-c C-o= to create a buffer containing all candidates.
 
 In summary, all functionalities from powerful [[https://github.com/abo-abo/swiper][ivy]] are supported perfectly.
 ** Grep program
-If [[https://github.com/BurntSushi/ripgrep][ripgrep]] is installed, it's used as faster grep program. Or else we fallback to grep.
+If [[https://github.com/BurntSushi/ripgrep][ripgrep]] is installed, it's used as faster grep program. Or else we fallback to =grep=.
 ** Windows
-No extra setup is needed if you install Cygwin to its default location on any driver. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-ctags-program=, and =counsel-etags-grep-program=.
+No extra setup is needed if you install Cygwin to its default location on any driver. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-tags-program=, and =counsel-etags-grep-program=.
 * Bug Report
 Check [[https://github.com/redguardtoo/counsel-etags]].

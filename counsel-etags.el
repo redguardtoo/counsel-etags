@@ -1,4 +1,4 @@
-;;; counsel-etags.el ---  Fast and complete Ctags solution
+;;; counsel-etags.el ---  Fast and complete Ctags/Etags solution using ivy-completion
 
 ;; Copyright (C) 2017  Free Software Foundation, Inc.
 
@@ -7,7 +7,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.3") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.1.7
+;; Version: 1.1.8
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -155,7 +155,7 @@ May be set using .dir-locals.el.  Checks each entry if set to a list."
   :type 'integer)
 
 
-(defcustom counsel-etags-after-update-tags-file-hook nil
+(defcustom counsel-etags-after-update-tags-hook nil
   "Hook after tags file is actually updated.
 The parameter of hook is full path of tags file."
   :group 'counsel-etags
@@ -163,7 +163,7 @@ The parameter of hook is full path of tags file."
 
 (defcustom counsel-etags-update-interval 300
   "The interval (seconds) to update TAGS.
-Used by `counsel-etags-update-tags-file'.
+Used by `counsel-etags-virtual-update-tags'.
 Default value is 300 seconds."
   :group 'counsel-etags
   :type 'integer)
@@ -174,7 +174,9 @@ Default value is 300 seconds."
   :type 'string)
 
 (defcustom counsel-etags-tags-program nil
-  "Ctags program.  Automatically detected if it's nil."
+  "Ctags program.  Automatically detected if it's nil.
+Exuberant Ctags is preferred.  But you can use \"etags\" instead by
+`(setq counsel-etags-tags-program \"etags\")'."
   :group 'counsel-etags
   :type 'string)
 
@@ -182,6 +184,19 @@ Default value is 300 seconds."
   "Grep program.  Automatically detected if it's nil."
   :group 'counsel-etags
   :type 'string)
+
+(defcustom counsel-etags-quiet-when-updating-tags t
+  "Be quiet when updating tags."
+  :group 'counsel-etags
+  :type 'boolean)
+
+(defcustom counsel-etags-update-tags-backend
+  'counsel-etags-update-tags-internal
+  "The function we used to update tags file during auto-updating.
+By default, it's `counsel-etags-update-tags-internal', but you can define your
+own function instead."
+  :group 'counsel-etags
+  :type 'sexp)
 
 ;; Timer to run auto-update TAGS.
 (defvar counsel-etags-timer nil "Internal timer.")
@@ -282,18 +297,18 @@ If FORCE is t, the commmand is executed without checking the timer."
     (string-match-p regex file)))
 
 ;;;###autoload
-(defun counsel-etags-update-tags-file-force (&optional quiet)
-  "Update tags file.  Be quiet if QUIET is t."
+(defun counsel-etags-update-tags-internal ()
+  "Update tags file now."
   (interactive)
   (let* ((tags-file (counsel-etags-locate-tags-file)))
     (when tags-file
       (counsel-etags-scan-dir (file-name-directory tags-file) t)
-      (run-hook-with-args 'counsel-etags-after-update-tags-file-hook tags-file)
-      (unless quiet
+      (run-hook-with-args 'counsel-etags-after-update-tags-hook tags-file)
+      (unless counsel-etags-quiet-when-updating-tags
         (message "%s is updated!" tags-file)))))
 
 (defun counsel-etags-read-file (file)
-  "Return FILE's content."
+  "Return FILE content."
   (with-temp-buffer
     (insert-file-contents file)
     (buffer-string)))
@@ -454,8 +469,9 @@ Focus on TAGNAME if it's not nil."
       (message "No tag at point")))))
 
 ;;;###autoload
-(defun counsel-etags-update-tags-file()
-  "Scan the code and create tags file again."
+(defun counsel-etags-virtual-update-tags()
+  "Scan the code and create tags file again.  Please note it's only interface
+used by other hooks or commands.  The tags updating might now happen."
   (interactive)
   (let* ((dir (and buffer-file-name
                    (file-name-directory buffer-file-name)))
@@ -476,7 +492,7 @@ Focus on TAGNAME if it's not nil."
 
        (t
         (setq counsel-etags-timer (current-time))
-        (counsel-etags-update-tags-file-force t)
+        (funcall 'counsel-etags-update-tags-backend)
         (message "All tag files have been updated after %d seconds!"
                  (- (float-time (current-time))
                     (float-time counsel-etags-timer))))))))
