@@ -234,13 +234,18 @@ own function instead."
     (buffer-string)))
 
 (defun counsel-etags-locate-tags-file ()
-  "Find tags file: either from `tags-file-name' or parent directory."
-  (cond
-   ((and tags-file-name (file-exists-p tags-file-name))
-    tags-file-name)
-   (t
-    (let* ((dir (locate-dominating-file default-directory "TAGS")))
-      (if dir (concat dir "TAGS"))))))
+  "Find tags file: Search in parent directory or use `tags-file-name'."
+  (let* ((dir (locate-dominating-file default-directory "TAGS")))
+    (cond
+     ;; Since we use `tags-file-name' only. The assumption is that the
+     ;; only one tags fiel is created per project. So in theory we should find
+     ;; tags file in parent directory
+     ;; Besides, we don't need worry about right location of tags file when
+     ;; switching projects,  using "search-parent-directory-first" method.
+     (dir
+      (concat dir "TAGS"))
+     ((and tags-file-name (file-exists-p tags-file-name))
+      tags-file-name))))
 
 (defun counsel-etags-project-root ()
   "Return the root of the project."
