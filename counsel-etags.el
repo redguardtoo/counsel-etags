@@ -350,15 +350,34 @@ If FORCE is t, the commmand is executed without checking the timer."
       (modify-syntax-entry ?_ "_"))
     cands))
 
+(defun counsel-etags-encode(s)
+  "Encode S."
+    ;; encode "{}[]"
+    (setq s (replace-regexp-in-string "\"" "\\\\\"" s))
+    (setq s (replace-regexp-in-string "\\?" "\\\\\?" s))
+    (setq s (replace-regexp-in-string "\\$" "\\\\x24" s))
+    (setq s (replace-regexp-in-string "\\*" "\\\\\*" s))
+    (setq s (replace-regexp-in-string "\\." "\\\\\." s))
+    (setq s (replace-regexp-in-string "\\[" "\\\\\[" s))
+    (setq s (replace-regexp-in-string "\\]" "\\\\\]" s))
+    ;; perl-regex support non-ASCII characters
+    ;; Turn on `-P` from `git grep' and `grep'
+    ;; the_silver_searcher and ripgrep need no setup
+    (setq s (replace-regexp-in-string "{" "\\\\{" s))
+    (setq s (replace-regexp-in-string "}" "\\\\}" s))
+    s)
+
 (defun counsel-etags-selected-str ()
-  "Get selected string."
-  (when (region-active-p)
-    (buffer-substring-no-properties (region-beginning) (region-end))))
+  "Get selected string.  Suppose plain text instead regex in selected text.
+So we need *encode* the string."
+  (if (region-active-p)
+      (counsel-etags-encode (buffer-substring-no-properties (region-beginning)
+                                                            (region-end)))))
 
 (defun counsel-etags-tagname-at-point ()
   "Get tag name at point."
-  (if (counsel-etags-selected-str) (counsel-etags-selected-str)
-    (find-tag-default)))
+  (let* ((s (counsel-etags-selected-str)))
+    (if s s (find-tag-default))))
 
 (defun counsel-etags-forward-line (lnum)
   "Forward LNUM lines."
