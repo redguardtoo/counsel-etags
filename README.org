@@ -54,6 +54,8 @@ You can also press =C-c C-o= to create a buffer containing all candidates.
 In summary, all functionalities from powerful [[https://github.com/abo-abo/swiper][ivy]] are supported perfectly.
 ** Grep program
 If [[https://github.com/BurntSushi/ripgrep][ripgrep]] is installed, it's used as faster grep program. Or else we fallback to =grep=.
+
+You can use =M-x counsel-etags-grep= or =M-x counsel-etags-grep-symbol-at-point= to grep in current project.
 ** Windows
 No extra setup is needed if you install Cygwin to its default location on any driver. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-tags-program=, and =counsel-etags-grep-program=.
 * Bug Report
