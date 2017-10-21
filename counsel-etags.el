@@ -32,6 +32,7 @@
 ;;   "M-x counsel-etags-scan-code" to create tags file
 ;;   "M-x counsel-etags-grep" to grep
 ;;   "M-x counsel-etags-grep-symbol-at-point" to grep the symbol at point
+;;   "M-x counsel-etags-recent-tag" open recent tag
 ;;
 ;; That's all!
 ;;
@@ -332,9 +333,13 @@ If FORCE is t, the commmand is executed without checking the timer."
     (insert-file-contents file)
     (buffer-string)))
 
-(defun counsel-etags-collect-cands (tagname)
-  "Parse tags file to find occurrences of TAGNAME."
-  (let* ((str (counsel-etags-read-file (counsel-etags-locate-tags-file)))
+(defun counsel-etags-collect-cands (tagname &optional dir)
+  "Parse tags file to find occurrences of TAGNAME in DIR."
+  (let* ((force-tags-file (and dir
+                               (file-exists-p (concat (file-name-as-directory dir) "TAGS"))
+                               (concat (file-name-as-directory dir) "TAGS")))
+         (str (counsel-etags-read-file (or force-tags-file
+                                           (counsel-etags-locate-tags-file))))
          (tag-regex (concat "^.*?\\(" "\^?\\(.+[:.']" tagname "\\)\^A"
                             "\\|" "\^?" tagname "\^A"
                             "\\|" "\\<" tagname "[ \f\t()=,;]*\^?[0-9,]"
@@ -359,7 +364,9 @@ If FORCE is t, the commmand is executed without checking the timer."
                              (match-string-no-properties 1))))
             (add-to-list 'cands
                          (cons (format "%s:%d:%s" filename linenum tag-line)
-                               (list filename linenum tagname))))))
+                               (list (concat (file-name-directory (counsel-etags-locate-tags-file)) filename)
+                                     linenum
+                                     tagname))))))
       (modify-syntax-entry ?_ "_"))
     cands))
 
@@ -398,10 +405,10 @@ So we need *encode* the string."
     (goto-char (point-min))
     (forward-line (1- lnum))))
 
-(defun counsel-etags-open-file-api (file linenum dir &optional tagname)
+(defun counsel-etags-open-file-api (file linenum &optional tagname)
   "Open FILE and goto LINENUM while `default-directory' is DIR.
 Focus on TAGNAME if it's not nil."
-  (let* ((default-directory dir))
+  (let* ((default-directory (file-name-directory file)))
     ;; open file
     (find-file file)
     ;; goto line
@@ -415,13 +422,22 @@ Focus on TAGNAME if it's not nil."
     (when (fboundp 'xref-pulse-momentarily)
       (xref-pulse-momentarily))))
 
+(defun counsel-etags-open-file-internal (item)
+  "Open file of ITEM."
+  (let* ((str (car item))
+         (val (cdr item))
+         (file (nth 0 val))
+         (linenum (nth 1 val))
+         (tagname (nth 2 val)))
+    (counsel-etags-open-file-api file
+                                 linenum
+                                 tagname)))
+
 (defun counsel-etags-open-file (item)
   "Find and open file of ITEM."
-  (let* ((val (cdr item)))
-    (counsel-etags-open-file-api (nth 0 val) ; file
-                          (nth 1 val) ; linenum
-                          (file-name-directory (counsel-etags-locate-tags-file))
-                          (nth 2 val)))) ; tagname
+  ;; only add tagname with matches into history
+  (add-to-list 'counsel-etags-tagname-history item)
+  (counsel-etags-open-file-internal item))
 
 (defun counsel-etags-open-cand (cands time)
   "Open CANDS.  Start open tags file at TIME."
@@ -475,20 +491,15 @@ Focus on TAGNAME if it's not nil."
     (when src-dir
       (counsel-etags-scan-dir src-dir t))))
 
-(defun counsel-etags-find-tag-api (tagname)
-  "Find tag with given TAGNAME."
+(defun counsel-etags-find-tag-api (tagname &optional dir)
+  "Find tag with given TAGNAME in DIR."
   (let* ((time (current-time)))
-    (setq counsel-etags-find-tag-candidates (counsel-etags-collect-cands tagname))
+    (setq counsel-etags-find-tag-candidates (counsel-etags-collect-cands tagname dir))
     (cond
      ((not counsel-etags-find-tag-candidates)
       ;; OK let's try grep if no tag found
       (counsel-etags-grep tagname "No tag found. "))
      (t
-      ;; only add tagname with matches into history
-      (add-to-list 'counsel-etags-tagname-history (format "%s@%s"
-                                                          tagname
-                                                          (or (counsel-etags-locate-project)
-                                                              default-directory)))
       (counsel-etags-open-cand counsel-etags-find-tag-candidates time)))))
 
 ;;;###autoload
@@ -510,6 +521,14 @@ Focus on TAGNAME if it's not nil."
       (counsel-etags-find-tag-api tagname))
      (t
       (message "No tag at point")))))
+
+;;;###autoload
+(defun counsel-etags-recent-tag ()
+  "Find tag using tagname from `counsel-etags-tagname-history'."
+  (interactive)
+  (ivy-read "Recent tag names:"
+            counsel-etags-tagname-history
+            :action #'counsel-etags-open-file-internal))
 
 ;;;###autoload
 (defun counsel-etags-virtual-update-tags()
@@ -622,9 +641,9 @@ If HINT is not nil, it's used as grep hint."
               :history 'counsel-git-grep-history ; share history with counsel
               :action `(lambda (line)
                          (let* ((lst (split-string line ":"))
-                                (file (car lst))
+                                (file (concat (counsel-etags-locate-project) (car lst)))
                                 (linenum (string-to-number (cadr lst))))
-                           (counsel-etags-open-file-api file linenum (counsel-etags-locate-project))))
+                           (counsel-etags-open-file-api file linenum)))
               :caller 'counsel-etags-grep)))
 
 ;;;###autoload

@@ -40,6 +40,8 @@ You can set up callback =counsel-etags-update-tags-backend= to create/update tag
 #+begin_src elisp
 (setq counsel-etags-update-tags-backend (lambda () (shell-command "find . -type f -iname \"*.[ch]\" | etags -")))
 #+end_src
+** Open recent tag
+=M-x counsel-etags-recent-tag=
 ** Ctags setup
 Google "filetype:ctags site:github.com". Here is [[https://gist.github.com/redguardtoo/b12ddae3b8010a276e9b][mine]].
 
