@@ -7,7 +7,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.3") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.1.9
+;; Version: 1.2.0
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -146,16 +146,18 @@
   :type '(repeat 'string))
 
 (defcustom counsel-etags-project-file '(".svn" ".hg" ".git")
-  "The file/directory used to locate project root.
-May be set using .dir-locals.el.  Checks each entry if set to a list."
+  "The file/directory used to locate project root directory.
+You can setup it using \".dir-locals.el\"."
   :group 'counsel-etags
   :type '(repeat 'string))
+
+(defcustom counsel-etags-project-root nil
+  "Project root directory.  The directory is automatically detect if it's nil.")
 
 (defcustom counsel-etags-max-file-size 64
   "Ignore files bigger than `counsel-etags-max-file-size' kilobytes."
   :group 'counsel-etags
   :type 'integer)
-
 
 (defcustom counsel-etags-after-update-tags-hook nil
   "Hook after tags file is actually updated.
@@ -171,19 +173,22 @@ Default value is 300 seconds."
   :type 'integer)
 
 (defcustom counsel-etags-find-program nil
-  "GNU find program.  Automatically detected if it's nil."
+  "GNU find program.  Program is automatically detected if it's nil."
   :group 'counsel-etags
   :type 'string)
 
 (defcustom counsel-etags-tags-program nil
-  "Ctags program.  Automatically detected if it's nil.
-Exuberant Ctags is preferred.  But you can use \"etags\" instead by
-`(setq counsel-etags-tags-program \"etags\")'."
+  "Tags Program.  Program is automatically detected if it's nil.
+You can setup this variable manually instead.
+If you use Emacs etags, '(setq counsel-etags-tags-program \"etags\")'.
+If you use Exuberant Ctags, '(setq counsel-etags-tags-program \"ctags -e -L\"'.
+You may specify extra options for your tags program.  For example, as C developer
+may set this variable to \"ctags --c-kinds=defgpstux -e -L\" "
   :group 'counsel-etags
   :type 'string)
 
 (defcustom counsel-etags-grep-program nil
-  "Grep program.  Automatically detected if it's nil."
+  "Grep program.  Program is automatically detected if it's nil."
   :group 'counsel-etags
   :type 'string)
 
@@ -201,6 +206,11 @@ own function instead."
   :type 'sexp)
 
 ;; Timer to run auto-update TAGS.
+(defconst counsel-etags-no-project-msg
+  "No project found.  You can create tags file using `counsel-etags-scan-code'.
+So we don't need project root at all.  Or you can setup `counsel-etags-project-root'."
+  "Message to display when no project is found.")
+
 (defvar counsel-etags-timer nil "Internal timer.")
 
 (defvar counsel-etags-keyword nil "The keyword to grep.")
@@ -248,16 +258,18 @@ own function instead."
      ((and tags-file-name (file-exists-p tags-file-name))
       tags-file-name))))
 
-(defun counsel-etags-project-root ()
+(defun counsel-etags-locate-project ()
   "Return the root of the project."
-  (let* ((project-root (if (listp counsel-etags-project-file)
-                          (cl-some (apply-partially 'locate-dominating-file
-                                                    default-directory)
-                                   counsel-etags-project-file)
-                        (locate-dominating-file default-directory
-                                                counsel-etags-project-file))))
-    (or (file-name-as-directory project-root)
-        (progn (message "No project was defined.")
+  (let* ((tags-dir (if (listp counsel-etags-project-file)
+                        (cl-some (apply-partially 'locate-dominating-file
+                                                  default-directory)
+                                 counsel-etags-project-file)
+                      (locate-dominating-file default-directory
+                                              counsel-etags-project-file)))
+         (project-root (or counsel-etags-project-root
+                           (and tags-dir (file-name-as-directory tags-dir)))))
+    (or project-root
+        (progn (message counsel-etags-no-project-msg)
                nil))))
 
 (defun counsel-etags-scan-dir (src-dir &optional force)
@@ -448,7 +460,7 @@ Focus on TAGNAME if it's not nil."
   "Make sure tags file does exist."
   (when (not (counsel-etags-locate-tags-file))
     (let* ((src-dir (read-directory-name "Ctags will scan code at:"
-                                         (counsel-etags-project-root))))
+                                         (counsel-etags-locate-project))))
       (if src-dir (counsel-etags-scan-dir src-dir t)
         (error "Can't find TAGS.  Please run `counsel-etags-scan-code'!")))))
 
@@ -458,7 +470,8 @@ Focus on TAGNAME if it's not nil."
   (interactive)
   (let* ((src-dir (or dir
                       (read-directory-name "Ctags will scan code at:"
-                                           (counsel-etags-project-root)))))
+                                           (or (counsel-etags-locate-project)
+                                               default-directory)))))
     (when src-dir
       (counsel-etags-scan-dir src-dir t))))
 
@@ -466,12 +479,16 @@ Focus on TAGNAME if it's not nil."
   "Find tag with given TAGNAME."
   (let* ((time (current-time)))
     (setq counsel-etags-find-tag-candidates (counsel-etags-collect-cands tagname))
-    (add-to-list 'counsel-etags-tagname-history tagname)
     (cond
      ((not counsel-etags-find-tag-candidates)
       ;; OK let's try grep if no tag found
       (counsel-etags-grep tagname "No tag found. "))
      (t
+      ;; only add tagname with matches into history
+      (add-to-list 'counsel-etags-tagname-history (format "%s@%s"
+                                                          tagname
+                                                          (or (counsel-etags-locate-project)
+                                                              default-directory)))
       (counsel-etags-open-cand counsel-etags-find-tag-candidates time)))))
 
 ;;;###autoload
@@ -589,10 +606,10 @@ If HINT is not nil, it's used as grep hint."
   (interactive)
   (let* ((keyword (if default-keyword default-keyword
                     (counsel-etags-read-keyword "Enter grep pattern: ")))
-         (default-directory (counsel-etags-project-root))
+         (default-directory (counsel-etags-locate-project))
          (time (current-time))
          (collection (split-string (shell-command-to-string (counsel-etags-grep-cli keyword nil)) "[\r\n]+" t))
-         (dir-summary (file-name-as-directory (file-name-base (directory-file-name (counsel-etags-project-root))))))
+         (dir-summary (file-name-as-directory (file-name-base (directory-file-name (counsel-etags-locate-project))))))
 
     (setq counsel-etags-opts-cache (plist-put counsel-etags-opts-cache :ignore-dirs counsel-etags-ignore-directories))
     (setq counsel-etags-opts-cache (plist-put counsel-etags-opts-cache :ignore-file-names counsel-etags-ignore-filenames))
@@ -607,7 +624,7 @@ If HINT is not nil, it's used as grep hint."
                          (let* ((lst (split-string line ":"))
                                 (file (car lst))
                                 (linenum (string-to-number (cadr lst))))
-                           (counsel-etags-open-file-api file linenum (counsel-etags-project-root))))
+                           (counsel-etags-open-file-api file linenum (counsel-etags-locate-project))))
               :caller 'counsel-etags-grep)))
 
 ;;;###autoload
