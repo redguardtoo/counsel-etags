@@ -1,4 +1,4 @@
-;;; counsel-etags.el ---  Fast and complete Ctags/Etags solution using ivy-completion
+;;; counsel-etags.el ---  Fast and complete Ctags/Etags solution using ivy
 
 ;; Copyright (C) 2017  Free Software Foundation, Inc.
 
