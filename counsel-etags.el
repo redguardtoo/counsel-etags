@@ -7,7 +7,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.3") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.3.0
+;; Version: 1.3.1
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -157,11 +157,10 @@ You can setup it using \".dir-locals.el\"."
   :group 'counsel-etags
   :type 'string)
 
-(defcustom counsel-etags-optimize-candidates-order t
-  "Optimize the candidates order.
-Canditates whose file path has Levenshtein distance to `buffer-file-name'
-or `default-directory' are listed at top.
-You may set it to nil if it's slow."
+(defcustom counsel-etags-candidates-optimize-limit 64
+  "Re-order candidates if andidate count is less than this variable's value.
+Canditates whose file path has Levenshtein distance to current file/directory.
+You may set it to nil to disable re-ordering for performance reason."
   :group 'counsel-etags
   :type 'boolean)
 
@@ -343,74 +342,70 @@ If FORCE is t, the commmand is executed without checking the timer."
     (insert-file-contents file)
     (buffer-string)))
 
-(defun counsel-etags-levenshtein-distance (str1 str2)
+(defmacro counsel-etags--tset (table x y val row-width)
+  "Set TABLE cell at positon (X, Y) with VAL and ROW-WIDTH."
+  `(aset ,table (+ ,x (* ,row-width ,y)) ,val))
+
+(defmacro counsel-etags--tref (table x y row-width)
+  "Get TABLE cell at positon (X, Y) with ROW-WIDTH."
+  `(aref ,table (+ ,x (* ,row-width ,y))))
+
+(defun counsel-etags-levenshtein-distance (str1 str2 d)
+  ;; (message "counsel-etags-levenshtein-distance called %s %s" str1 str2)
   "Return the edit distance between strings STR1 and STR2.
-Copied from https://www.emacswiki.org/emacs/levenshtein.el."
-  (let* ((make-table ;; Multi-dimensional array object.
-          (function
-           (lambda (columns rows init)
-             (make-vector rows (make-vector columns init)))))
-         (tref ;; Table access method.
-          (function
-           (lambda (table x y)
-            (aref (aref table y) x))))
-         (tset ;; Table write method.
-          (function
-           (lambda
-             (table x y object)
-             (let ((row (copy-sequence (aref table y))))
-               (aset row x object)
-               (aset table y row)
-               object))))
-         ;; End table code.
-         (length-str1 (length str1))
+D is the table to storing computing result.
+Optimized version based on https://www.emacswiki.org/emacs/levenshtein.el."
+  (let* ((length-str1 (length str1))
          (length-str2 (length str2))
-         ;; d is a table with lenStr2+1 rows and lenStr2+1 columns
-         (d (funcall make-table (1+ length-str1) (1+ length-str2)
-                                0))) ;; Initialize to zero.
+         ;; d is a table with lenStr2+1 rows and lenStr1+1 columns
+         (row-width (1+ length-str1))
+         (i 0)
+         (j 0))
     ;; i and j are used to iterate over str1 and str2
-    (let ((i 0)
-          (j 0))
-      (while (<= i length-str1) ;; for i from 0 to lenStr1
-        (funcall tset d i 0 i) ;; d[i, 0] := i
-        (setq i (1+ i))) ;; i++
-      (while (<= j length-str2) ;; for j from 0 to lenStr2
-        (funcall tset d 0 j j) ;; d[0, j] := j
-        (setq j (1+ j)))) ;; j++
-    (let ((i 1))
-      (while (<= i length-str1) ;; for i from 1 to lenStr1
-        (let ((j 1))
-          (while (<= j length-str2) ;; for j from 1 to lenStr2
-            (let* ((cost
-                    ;; if str[i] = str[j] then cost:= 0 else cost := 1
-                    (if (equal (aref str1 (1- i)) (aref str2 (1- j)))
-                        0
-                      1))
-                   ;; d[i-1, j] + 1     // deletion
-                   (deletion (1+ (funcall tref d (1- i) j)))
-                   ;; d[i, j-1] + 1     // insertion
-                   (insertion (1+ (funcall tref d i (1- j))))
-                   ;; d[i-j,j-1] + cost // substitution
-                   (substitution
-                    (+ (funcall tref d (1- i) (1- j)) cost)))
-              (funcall tset d i j ;; d[i,j] := minimum(
-                    (min insertion deletion substitution)))
-            (setq j (1+ j)))) ;; j++
-        (setq i (1+ i)))) ;; i++
+    (while (<= i length-str1) ;; for i from 0 to lenStr1
+      (counsel-etags--tset d i 0 i row-width) ;; d[i, 0] := i
+      (setq i (1+ i)))
+    (while (<= j length-str2) ;; for j from 0 to lenStr2
+      (counsel-etags--tset d 0 j j row-width) ;; d[0, j] := j
+      (setq j (1+ j)))
+    (setq i 1)
+    (while (<= i length-str1) ;; for i from 1 to lenStr1
+      (setq j 1)
+      (while (<= j length-str2) ;; for j from 1 to lenStr2
+        (let* ((cost
+                ;; if str[i] = str[j] then cost:= 0 else cost := 1
+                (if (equal (aref str1 (1- i)) (aref str2 (1- j))) 0 1))
+               ;; d[i-1, j] + 1     // deletion
+               (deletion (1+ (counsel-etags--tref d (1- i) j row-width)))
+               ;; d[i, j-1] + 1     // insertion
+               (insertion (1+ (counsel-etags--tref d i (1- j) row-width)))
+               ;; d[i-j,j-1] + cost // substitution
+               (substitution (+ (1+ (counsel-etags--tref d (1- i) (1- j) row-width)) cost))
+               )
+
+          (counsel-etags--tset d i j (min insertion deletion substitution) row-width))
+        (setq j (1+ j))) ;; j++
+      (setq i (1+ i))) ;; i++
     ;; return d[lenStr1, lenStr2]
-    (funcall tref d length-str1 length-str2)))
+    (counsel-etags--tref d length-str1 length-str2 row-width)))
 
 (defun counsel-etags-sort-candidates-maybe (cands is-string)
-  "Sort CANDS if `counsel-etags-optimize-candidates-order' is t.
+  "Sort CANDS if `counsel-etags-candidates-optimize-limit' is t.
 IS-STRING is t if the candidate is string."
-  (let* ((ref (or buffer-file-name default-directory)))
-    (if counsel-etags-optimize-candidates-order
-        (sort cands `(lambda (item1 item2)
-                       (let* ((a (if ,is-string item1 (cadr item1)))
-                              (b (if ,is-string item2 (cadr item2))))
-                         (< (counsel-etags-levenshtein-distance a ,ref)
-                            (counsel-etags-levenshtein-distance b ,ref)))))
-      cands)))
+  (let* ((ref buffer-file-name)
+         ;; it's impossible files name has more than 512 characters
+         (d (make-vector (* 512 512) 0)))
+    (cond
+     ((and ref
+           counsel-etags-candidates-optimize-limit
+           (< (length cands) counsel-etags-candidates-optimize-limit))
+      (sort cands `(lambda (item1 item2)
+                     (let* ((a (if ,is-string item1 (cadr item1)))
+                            (b (if ,is-string item2 (cadr item2))))
+                       (< (counsel-etags-levenshtein-distance a ,ref ,d)
+                          (counsel-etags-levenshtein-distance b ,ref ,d))))))
+     (t
+      cands))))
 
 (defun counsel-etags-collect-cands (tagname &optional dir)
   "Parse tags file to find occurrences of TAGNAME in DIR."
@@ -714,11 +709,13 @@ If HINT is not nil, it's used as grep hint."
     (setq counsel-etags-opts-cache (plist-put counsel-etags-opts-cache :ignore-dirs counsel-etags-ignore-directories))
     (setq counsel-etags-opts-cache (plist-put counsel-etags-opts-cache :ignore-file-names counsel-etags-ignore-filenames))
 
+    ;; Slow down grep 10 times
+    ;; (setq cands (counsel-etags-sort-candidates-maybe cands t))
     (ivy-read (concat hint (format "Grep \"%s\" at %s (%.01f seconds): "
                                    keyword
                                    dir-summary
                                    (float-time (time-since time))))
-              (counsel-etags-sort-candidates-maybe cands t)
+              cands
               :history 'counsel-git-grep-history ; share history with counsel
               :action `(lambda (line)
                          (let* ((lst (split-string line ":"))
