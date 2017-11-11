@@ -1,6 +1,6 @@
 #!/bin/bash
 name=counsel-etags
-version=1.2.0
+version=1.3.0
 pkg=$name-$version
 mkdir $pkg
 cp *.el $pkg
