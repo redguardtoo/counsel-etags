@@ -26,12 +26,47 @@ That's it.
 
 If you prefer manually setup tags file. You only need run =M-x counsel-etags-scan-code= once or create tags file in your own way.
 * Tips (OPTIONAL)
+** Ignore directories/files
+You can setup =grep-find-ignored-directories= and =grep-find-ignored-files= to ignore directories/files,
+#+begin_src elisp
+(eval-after-load 'grep
+  '(progn
+     (dolist (v '("auto"
+                  "target"
+                  "node_modules"
+                  "bower_components"
+                  "*dist"
+                  ".sass_cache"
+                  ".cache"
+                  ".npm"
+                  "elpa"))
+       (add-to-list 'grep-find-ignored-directories v))
+
+     (dolist (v '("*.min.js"
+                  "*.map"
+                  "*.bundle.js"
+                  "*.min.css"
+                  "tags"
+                  "TAGS"
+                  "GTAGS"
+                  "GRTAGS"
+                  "GPATH"
+                  "cscope.files"
+                  "*.json"
+                  "*.log"))
+       (add-to-list 'grep-find-ignored-files v))))
+#+end_src
 ** tags-file-name
 We try to setup Emacs global variable =tags-file-name= if it's nil.
 
 If it's not nil, we respect =tags-file-name=. Please note we don't support =tags-table-list=.
 ** Auto update tags file
 #+begin_src elisp
+;; Don't ask before rereading the TAGS files if they have changed
+(setq tags-revert-without-query t)
+;; Don't warn when TAGS files are large
+(setq large-file-warning-threshold nil)
+;; Setup auto update now
 (add-hook 'prog-mode-hook
   (lambda ()
     (add-hook 'after-save-hook
