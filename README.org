@@ -1,4 +1,4 @@
-* counsel-etags (v1.3.5)
+* counsel-etags (v1.3.6)
 
 Fast and complete Ctags solution using ivy-completion.
 
@@ -76,6 +76,8 @@ You can change callback =counsel-etags-update-tags-backend= to update tags file 
 #+begin_src elisp
 (setq counsel-etags-update-tags-backend (lambda () (shell-command "find . -type f -iname \"*.[ch]\" | etags -")))
 #+end_src
+** Fuzzy search tag
+=M-x counsel-etags-find-tag=
 ** Open recent tag
 =M-x counsel-etags-recent-tag=
 ** Ctags setup

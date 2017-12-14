@@ -7,7 +7,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.3") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.3.5
+;; Version: 1.3.6
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +32,8 @@
 ;;   "M-x counsel-etags-scan-code" to create tags file
 ;;   "M-x counsel-etags-grep" to grep
 ;;   "M-x counsel-etags-grep-symbol-at-point" to grep the symbol at point
-;;   "M-x counsel-etags-recent-tag" open recent tag
+;;   "M-x counsel-etags-recent-tag" to open recent tag
+;;   "M-x counsel-etags-find-tag" to fuzzy searching tag
 ;;
 ;; That's all!
 ;;
@@ -463,17 +464,18 @@ IS-STRING is t if the candidate is string."
      (t
       cands))))
 
-(defun counsel-etags-collect-cands (tagname &optional dir)
-  "Parse tags file to find occurrences of TAGNAME in DIR."
+(defun counsel-etags-collect-cands (tagname fuzzy &optional dir)
+  "Parse tags file to find occurrences of TAGNAME using FUZZY algorithm in DIR."
   (let* ((force-tags-file (and dir
                                (file-exists-p (concat (file-name-as-directory dir) "TAGS"))
                                (concat (file-name-as-directory dir) "TAGS")))
          (tags-file (or force-tags-file
                         (counsel-etags-locate-tags-file)))
          (str (counsel-etags-read-file tags-file))
-         (tag-regex (concat "^.*?\\(" "\^?\\(.+[:.']" tagname "\\)\^A"
-                            "\\|" "\^?" tagname "\^A"
-                            "\\|" "\\<" tagname "[ \f\t()=,;]*\^?[0-9,]"
+         (fuzzy-tagname (if fuzzy (format "[a-zA-Z0-9_$-]*%s[a-zA-Z0-9_$-]*" tagname) tagname))
+         (tag-regex (concat "^.*?\\(" "\^?\\(.+[:.']" fuzzy-tagname "\\)\^A"
+                            "\\|" "\^?" fuzzy-tagname "\^A"
+                            "\\|" "\\<" fuzzy-tagname "[ \f\t()=,;]*\^?[0-9,]"
                             "\\)"))
          (tag-file-path (file-name-directory (counsel-etags-locate-tags-file)))
          cands)
@@ -630,10 +632,10 @@ Focus on TAGNAME if it's not nil."
     (when src-dir
       (counsel-etags-scan-dir src-dir t))))
 
-(defun counsel-etags-find-tag-api (tagname &optional dir)
-  "Find tag with given TAGNAME in DIR."
+(defun counsel-etags-find-tag-api (tagname fuzzy &optional dir)
+  "Find tag with given TAGNAME using FUZZY algorithm in DIR."
   (let* ((time (current-time)))
-    (setq counsel-etags-find-tag-candidates (counsel-etags-collect-cands tagname dir))
+    (setq counsel-etags-find-tag-candidates (counsel-etags-collect-cands tagname fuzzy dir))
     (cond
      ((not counsel-etags-find-tag-candidates)
       ;; OK let's try grep if no tag found
@@ -643,12 +645,12 @@ Focus on TAGNAME if it's not nil."
 
 ;;;###autoload
 (defun counsel-etags-find-tag ()
-  "Input tagname to find tag."
+  "Find tag by fuzzy matching."
   (interactive)
   (counsel-etags-tags-file-must-exist)
-  (let* ((tagname (read-string "Please input tag name:")))
+  (let* ((tagname (read-string "Please input keyword for fuzzy matching:")))
     (when (and tagname (not (string= tagname "")))
-        (counsel-etags-find-tag-api tagname))))
+        (counsel-etags-find-tag-api tagname t))))
 
 ;;;###autoload
 (defun counsel-etags-find-tag-at-point ()
@@ -658,7 +660,7 @@ Focus on TAGNAME if it's not nil."
   (let* ((tagname (counsel-etags-tagname-at-point)))
     (cond
      (tagname
-      (counsel-etags-find-tag-api tagname))
+      (counsel-etags-find-tag-api tagname nil))
      (t
       (message "No tag at point")))))
 
