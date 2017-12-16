@@ -14,6 +14,8 @@ Place counsel-etags.el somewhere (say ~/.emacs/lisp), add below code into =.emac
 (require 'counsel-etags)
 #+end_src
 
+You also need make sure "Exuberant Ctags" and "GNU Find" exist.
+
 * Usage
 Run =M-x counsel-etags-find-tag-at-point= to navigate in code files without any setup.
 
@@ -24,7 +26,7 @@ This command will:
 
 That's it.
 
-If you prefer manually setup tags file. You only need run =M-x counsel-etags-scan-code= once or create tags file in your own way.
+If you prefer manually setup tags file. You only need run =M-x counsel-etags-scan-code= once or create tags file [[https://www.emacswiki.org/emacs/BuildTags][in your own way]].
 * Tips (OPTIONAL)
 ** Ignore directories/files
 You can setup =grep-find-ignored-directories= and =grep-find-ignored-files= to ignore directories/files,
@@ -59,7 +61,7 @@ You can setup =grep-find-ignored-directories= and =grep-find-ignored-files= to i
 ** tags-file-name
 We try to setup Emacs global variable =tags-file-name= if it's nil.
 
-If it's not nil, we respect =tags-file-name=. Please note we don't support =tags-table-list=.
+If it's not nil, we respect existing value of =tags-file-name=. Please note we don't support =tags-table-list=.
 ** Auto update tags file
 #+begin_src elisp
 ;; Don't ask before rereading the TAGS files if they have changed
@@ -97,6 +99,6 @@ If [[https://github.com/BurntSushi/ripgrep][ripgrep]] is installed, it's used as
 
 You can use =M-x counsel-etags-grep= or =M-x counsel-etags-grep-symbol-at-point= to grep in current project.
 ** Windows
-No extra setup is needed if you install Cygwin to its default location on any driver. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-tags-program=, and =counsel-etags-grep-program=.
+No extra setup is needed if you install Cygwin to its default location on any driver except make sure "Exuberant Ctags" has been installed through Cygwin. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-tags-program=, and =counsel-etags-grep-program=.
 * Bug Report
 Check [[https://github.com/redguardtoo/counsel-etags]].

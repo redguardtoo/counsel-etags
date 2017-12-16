@@ -26,6 +26,8 @@
 ;;; Commentary:
 
 ;; Usage:
+;;   "Exuberant Ctags" and "GNU Find" should exist at first.
+;;
 ;;   "M-x counsel-etags-find-tag-at-point" to navigate.  This command will also
 ;;   run `counsel-etags-scan-code' automatically if tags file is not built yet.
 ;;
