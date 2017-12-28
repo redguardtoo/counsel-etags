@@ -7,7 +7,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.3") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.3.6
+;; Version: 1.3.7
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -55,35 +55,16 @@
 ;;   For example, input "keyword1 !keyword2 keyword3" means:
 ;;   "(keyword1 and (not (keyword2 or keyword3))"
 ;;
-;; - Use `grep-find-ignored-directories', `grep-find-ignored-files' to ignore directories/files,
-;;
-;;   (eval-after-load 'grep
+;; - You can setup `counsel-etags-ignore-directories' and `counsel-etags-ignore-filenames',
+;;   (eval-after-load 'counsel-etags
 ;;     '(progn
-;;        (dolist (v '("auto"
-;;                     "target"
-;;                     "node_modules"
-;;                     "bower_components"
-;;                     "*dist"
-;;                     ".sass_cache"
-;;                     ".cache"
-;;                     ".npm"
-;;                     "elpa"))
-;;          (add-to-list 'grep-find-ignored-directories v))
+;;        ;; counsel-etags-ignore-directories does NOT support wildcast
+;;        (add-to-list 'counsel-etags-ignore-directories "build_clang")
+;;        (add-to-list 'counsel-etags-ignore-directories "build_clang")
+;;        ;; counsel-etags-ignore-filenames supports wildcast
+;;        (add-to-list 'counsel-etags-ignore-filenames "TAGS")
+;;        (add-to-list 'counsel-etags-ignore-filenames "*.json")))
 
-;;        (dolist (v '("*.min.js"
-;;                     "*.map"
-;;                     "*.bundle.js"
-;;                     "*.min.css"
-;;                     "tags"
-;;                     "TAGS"
-;;                     "GTAGS"
-;;                     "GRTAGS"
-;;                     "GPATH"
-;;                     "cscope.files"
-;;                     "*.json"
-;;                     "*.log"))
-;;        (add-to-list 'grep-find-ignored-files v))))
-;;
 ;; See https://github.com/redguardtoo/counsel-etags/ for more tips.
 
 ;;; Code:
@@ -113,14 +94,14 @@
     ".npm"
     ".tmp" ; TypeScript
     ".sass-cache" ; SCSS/SASS
-    ".idea*"
+    ".idea"
     "node_modules"
     "bower_components"
     ;; python
     ".tox"
     ;; emacs
     ".cask")
-  "Ignore directories.  Wildcast is supported."
+  "Ignore directory names."
   :group 'counsel-etags
   :type '(repeat 'string))
 
@@ -325,6 +306,12 @@ So we don't need project root at all.  Or you can setup `counsel-etags-project-r
         (progn (message counsel-etags-no-project-msg)
                nil))))
 
+(defun counsel-etags-dir-pattern (s)
+  ;; trim the '*'
+  (setq s (replace-regexp-in-string "\\`[*]*" "" (replace-regexp-in-string "[*]*\\'" "" s)))
+  (message "s=%s" s)
+  (file-name-as-directory s))
+
 (defun counsel-etags-scan-dir (src-dir &optional force)
   "Create tags file from SRC-DIR.
 If FORCE is t, the commmand is executed without checking the timer."
@@ -336,12 +323,10 @@ If FORCE is t, the commmand is executed without checking the timer."
          (cmd (format "%s . \\( %s \\) -prune -o -type f -not -size +%sk %s | %s -"
                       find-pg
                       (mapconcat (lambda (p)
-                                   (format "-iwholename \"*/%s*\""
-                                           (shell-quote-argument (file-name-as-directory p))))
+                                   (format "-iwholename \"*/%s*\"" (counsel-etags-dir-pattern p)))
                                  counsel-etags-ignore-directories " -or ")
                       counsel-etags-max-file-size
-                      (mapconcat (lambda (n)
-                                   (format "-not -name \"%s\"" (shell-quote-argument n)))
+                      (mapconcat (lambda (n) (format "-not -name \"%s\"" n))
                                  counsel-etags-ignore-filenames " ")
                       ctags-pg))
          (tags-file (concat (file-name-as-directory src-dir) "TAGS"))
@@ -727,19 +712,19 @@ used by other hooks or commands.  The tags updating might now happen."
     (cond
      ((counsel-etags-has-quick-grep)
       (concat (mapconcat (lambda (e)
-                           (format "-g='!%s/*'" (shell-quote-argument e)))
+                           (format "-g='!%s/*'" e))
                          ignore-dirs " ")
               " "
               (mapconcat (lambda (e)
-                           (format "-g='!%s'" (shell-quote-argument e)))
+                           (format "-g='!%s'" e))
                          ignore-file-names " ")))
      (t
       (concat (mapconcat (lambda (e)
-                           (format "--exclude-dir='%s'" (shell-quote-argument e)))
+                           (format "--exclude-dir='%s'" e))
                          ignore-dirs " ")
               " "
               (mapconcat (lambda (e)
-                           (format "--exclude='%s'" (shell-quote-argument e)))
+                           (format "--exclude='%s'" e))
                          ignore-file-names " "))))))
 
 (defun counsel-etags-grep-cli (keyword use-cache)
