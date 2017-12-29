@@ -309,7 +309,6 @@ So we don't need project root at all.  Or you can setup `counsel-etags-project-r
 (defun counsel-etags-dir-pattern (s)
   ;; trim the '*'
   (setq s (replace-regexp-in-string "\\`[*]*" "" (replace-regexp-in-string "[*]*\\'" "" s)))
-  (message "s=%s" s)
   (file-name-as-directory s))
 
 (defun counsel-etags-scan-dir (src-dir &optional force)
