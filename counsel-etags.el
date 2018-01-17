@@ -263,6 +263,12 @@ So we don't need project root at all.  Or you can setup `counsel-etags-project-r
        ((file-executable-p (setq rlt (concat "c:\\\\cygwin64\\\\bin\\\\" name ".exe"))))
        ((file-executable-p (setq rlt (concat "d:\\\\cygwin64\\\\bin\\\\" name ".exe"))))
        ((file-executable-p (setq rlt (concat "e:\\\\cygwin64\\\\bin\\\\" name ".exe"))))
+       ((file-executable-p (setq rlt (concat "f:\\\\cygwin64\\\\bin\\\\" name ".exe"))))
+       ((file-executable-p (setq rlt (concat "g:\\\\cygwin64\\\\bin\\\\" name ".exe"))))
+       ((file-executable-p (setq rlt (concat "h:\\\\cygwin64\\\\bin\\\\" name ".exe"))))
+       ((file-executable-p (setq rlt (concat "i:\\\\cygwin64\\\\bin\\\\" name ".exe"))))
+       ((file-executable-p (setq rlt (concat "j:\\\\cygwin64\\\\bin\\\\" name ".exe"))))
+       ((file-executable-p (setq rlt (concat "k:\\\\cygwin64\\\\bin\\\\" name ".exe"))))
        (t (setq rlt nil))))
     (if rlt rlt name)))
 
