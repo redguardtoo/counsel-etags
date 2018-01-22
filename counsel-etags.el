@@ -7,7 +7,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.3") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.3.7
+;; Version: 1.3.8
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -245,6 +245,8 @@ own function instead."
 So we don't need project root at all.  Or you can setup `counsel-etags-project-root'."
   "Message to display when no project is found.")
 
+(defvar counsel-etags-debug nil "Enable debug mode.")
+
 (defvar counsel-etags-timer nil "Internal timer.")
 
 (defvar counsel-etags-keyword nil "The keyword to grep.")
@@ -324,8 +326,8 @@ If FORCE is t, the commmand is executed without checking the timer."
   (let* ((find-pg (or counsel-etags-find-program (counsel-etags-guess-program "find")))
          (ctags-pg (or counsel-etags-tags-program (format "%s -e -L" (counsel-etags-guess-program "ctags"))))
          (default-directory src-dir)
-         ;; run find&ctags to create TAGS
-         (cmd (format "%s . \\( %s \\) -prune -o -type f -not -size +%sk %s | %s -"
+         ;; run find&ctags to create TAGS, `-print` is important option to filter correctly
+         (cmd (format "%s . \\( %s \\) -prune -o -type f -not -size +%sk %s -print | %s -"
                       find-pg
                       (mapconcat (lambda (p)
                                    (format "-iwholename \"*/%s*\"" (counsel-etags-dir-pattern p)))
@@ -338,8 +340,11 @@ If FORCE is t, the commmand is executed without checking the timer."
          (doit (or force (not (file-exists-p tags-file)))))
     ;; always update cli options
     (when doit
-      (message "%s at %s" cmd default-directory)
-      (shell-command cmd)
+      (message "%s at %s" (if ffip-debug cmd "Scan") default-directory)
+      ;; Run the shell command without any interrupt or extra information
+      (let* ((async-shell-command-buffer 'new-buffer)
+             (display-buffer-alist '(("Async Shell Command" display-buffer-no-window))))
+        (async-shell-command cmd))
       (visit-tags-table tags-file t))))
 
 ;;;###autoload
