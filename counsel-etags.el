@@ -7,7 +7,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.4") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.3.9
+;; Version: 1.4.0
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -170,7 +170,7 @@
   :group 'counsel-etags
   :type '(repeat 'string))
 
-(defcustom counsel-etags-project-file '(".svn" ".hg" ".git")
+(defcustom counsel-etags-project-file '("TAGS" "tags" ".svn" ".hg" ".git")
   "The file/directory used to locate project root directory.
 You can setup it using \".dir-locals.el\"."
   :group 'counsel-etags
