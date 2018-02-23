@@ -2,9 +2,7 @@
 
 Fast and complete Ctags solution using ivy-completion.
 
-It's tested in huge projects like Linux Kernel source.
-
-Usable even with *one million* candidates.
+It's tested in huge projects like Linux Kernel source and it still works even with *one million* candidates.
 
 * Install
 Place counsel-etags.el somewhere (say ~/.emacs/lisp), add below code into =.emacs=:
