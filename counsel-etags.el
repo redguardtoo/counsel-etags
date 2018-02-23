@@ -7,7 +7,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.4") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.4.0
+;; Version: 1.4.1
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -340,7 +340,7 @@ If FORCE is t, the commmand is executed without checking the timer."
          (doit (or force (not (file-exists-p tags-file)))))
     ;; always update cli options
     (when doit
-      (message "%s at %s" (if ffip-debug cmd "Scan") default-directory)
+      (message "%s at %s" (if counsel-etags-debug cmd "Scan") default-directory)
       ;; Run the shell command without any interrupt or extra information
       (let* ((async-shell-command-buffer 'new-buffer)
              (display-buffer-alist '(("Async Shell Command" display-buffer-no-window))))
