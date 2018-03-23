@@ -358,7 +358,8 @@ If FORCE is t, the commmand is executed without checking the timer."
 ;;;###autoload
 (defun counsel-etags-directory-p (regex)
   "Does directory of current file match REGEX?"
-  (let* ((dir (or (when buffer-file-name
+  (let* ((case-fold-search nil)
+         (dir (or (when buffer-file-name
                     (file-name-directory buffer-file-name))
                   ;; buffer is created in real time
                   default-directory
@@ -368,7 +369,8 @@ If FORCE is t, the commmand is executed without checking the timer."
 ;;;###autoload
 (defun counsel-etags-filename-p (regex)
   "Does current file match REGEX?"
-  (let* ((file (or buffer-file-name default-directory "")))
+  (let* ((case-fold-search nil)
+         (file (or buffer-file-name default-directory "")))
     (string-match-p regex file)))
 
 ;;;###autoload
