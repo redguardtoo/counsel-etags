@@ -601,8 +601,7 @@ So we need *encode* the string."
 
 (defun counsel-etags-tagname-at-point ()
   "Get tag name at point."
-  (let* ((s (counsel-etags-selected-str)))
-    (if s s (find-tag-default))))
+  (or (counsel-etags-selected-str) (find-tag-default)))
 
 (defun counsel-etags-forward-line (lnum)
   "Forward LNUM lines."
@@ -772,11 +771,15 @@ Focus on TAGNAME if it's not nil."
 ;;;###autoload
 (defun counsel-etags-find-tag ()
   "Find tag by two step matching.
-First, user need input regex to match tags.
-Second, user could filter in matches."
+
+First, user need input regex to fuzzy match tag.
+Any tag whose sub-string matches regex will be listed.
+
+Second, user could filter tags."
   (interactive)
   (counsel-etags-tags-file-must-exist)
-  (let* ((tagname (read-string "Please input regex to match tag:")))
+  (let* ((tagname (read-string "Regex to match tag:"
+                               (or (counsel-etags-selected-str) ""))))
     (when (and tagname (not (string= tagname "")))
         (counsel-etags-find-tag-api tagname t))))
 
@@ -938,9 +941,8 @@ If HINT is not nil, it's used as grep hint."
 (defun counsel-etags-grep-symbol-at-point ()
   "Similar to `counsel-etags-grep' but grep symbol at point."
   (interactive)
-  (counsel-etags-grep (if (region-active-p) (counsel-etags-selected-str)
-                        (thing-at-point 'symbol))))
-
+  (counsel-etags-grep (or (counsel-etags-selected-str)
+                          (thing-at-point 'symbol))))
 
 ;; {{ occur setup
 (defun counsel-etags-tag-occur-api (items)
