@@ -188,7 +188,7 @@ You can setup it using \".dir-locals.el\"."
   :group 'counsel-etags
   :type 'string)
 
-(defcustom counsel-etags-candidates-optimize-limit 64
+(defcustom counsel-etags-candidates-optimize-limit 256
   "Re-order candidates if andidate count is less than this variable's value.
 Canditates whose file path has Levenshtein distance to current file/directory.
 You may set it to nil to disable re-ordering for performance reason."
