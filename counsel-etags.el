@@ -495,6 +495,13 @@ IS-STRING is t if the candidate is string."
   (let* ((ref (and buffer-file-name
                    (counsel-etags--strip-path buffer-file-name strip-count))))
     (cond
+     ;; Emacs 27 `string-distance' is as 100 times fast as Lisp implementation.
+     ((fboundp 'string-distance)
+      (sort cands `(lambda (item1 item2)
+                     (let* ((a (counsel-etags--strip-path (file-truename (if ,is-string item1 (cadr item1))) ,strip-count))
+                            (b (counsel-etags--strip-path (file-truename (if ,is-string item2 (cadr item2))) ,strip-count)))
+                       (< (string-distance a ,ref)
+                          (string-distance b ,ref))))))
      ((and ref
            counsel-etags-candidates-optimize-limit
            (< (length cands) counsel-etags-candidates-optimize-limit))
