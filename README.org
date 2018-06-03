@@ -14,6 +14,11 @@ Place counsel-etags.el somewhere (say ~/.emacs/lisp), add below code into =.emac
 
 You also need make sure "Exuberant Ctags" and "GNU Find" exist.
 
+"Ctags" (Universal Ctags is recommended) and "GNU Find" should exist so this program works out of box.
+
+Or else, use `counsel-etags-update-tags-backend' to customize shell command to generate tags file.
+
+Please note [[https://github.com/redguardtoo/emacs.d/issues/697#issuecomment-394141015][it's reported]] "Exuberant Ctags" v5.8.5 is buggy.
 * Usage
 Run =M-x counsel-etags-find-tag-at-point= to navigate in code files without any setup.
 

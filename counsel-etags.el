@@ -25,8 +25,13 @@
 
 ;;; Commentary:
 
+;;  Setup:
+;;   "Ctags" (Universal Ctags is recommended) and "GNU Find" should exist
+;;   so this program works out of box.
+;;   Or else, use `counsel-etags-update-tags-backend' to customize shell command
+;;   to generate tags file
+;;
 ;; Usage:
-;;   "Exuberant Ctags" and "GNU Find" should exist at first.
 ;;
 ;;   "M-x counsel-etags-find-tag-at-point" to navigate.  This command will also
 ;;   run `counsel-etags-scan-code' AUTOMATICALLY if tags file is not built yet.
@@ -411,7 +416,7 @@ If FORCE is t, the commmand is executed without checking the timer."
 
 ;;;###autoload
 (defun counsel-etags-update-tags-force ()
-  "Update tags file now."
+  "Update tags file now using default implementation."
   (interactive)
   (let* ((tags-file (counsel-etags-locate-tags-file)))
     (when tags-file
