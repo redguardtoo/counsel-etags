@@ -333,22 +333,8 @@ So we don't need project root at all.  Or you can setup `counsel-etags-project-r
         (progn (message counsel-etags-no-project-msg)
                nil))))
 
-
-(defun counsel-etags-shell-command-sentinel (process signal)
-  "We need know when the PROCESS ends and what SIGNAL it sends."
-  (message "counsel-etags-locate-project called => %s %s" process signal)
-  (let* ((status (process-status process)))
-    (when (memq status '(exit signal))
-      (cond
-       ((string= (substring signal 0 -1) "finished")
-        (let* ((cmd (car (cdr (cdr (process-command process))))))
-          (if counsel-etags-debug (message "`%s` executed." cmd))
-          (message "Tags file was created.")))
-       (t
-        (message "Failed to create tags file."))))))
-
-(defun counsel-etags-async-shell-command (command)
-  "Execute string COMMAND asynchronously in background."
+(defun counsel-etags-async-shell-command (command tags-file)
+  "Execute string COMMAND and create TAGS-FILE asynchronously."
   (let* ((directory default-directory)
          ;; Run the shell command without any interrupt or extra information
          (buffer (generate-new-buffer "*Etags Generating Command*"))
@@ -361,7 +347,24 @@ So we don't need project root at all.  Or you can setup `counsel-etags-project-r
       (setq default-directory directory)
       (setq proc (start-process "Shell" buffer shell-file-name
                                 shell-command-switch command))
-      (set-process-sentinel proc 'counsel-etags-shell-command-sentinel)
+      (set-process-sentinel proc `(lambda (process signal)
+
+                                    (let* ((status (process-status process)))
+                                    (when (memq status '(exit signal))
+                                      (cond
+                                       ((string= (substring signal 0 -1) "finished")
+                                        (let* ((cmd (car (cdr (cdr (process-command process))))))
+                                          (if counsel-etags-debug (message "`%s` executed." cmd))
+                                          ;; reload tags-file
+                                          (when (and ,tags-file (file-exists-p ,tags-file))
+                                            (message "Tags file %s was created." ,tags-file)
+                                            (visit-tags-table ,tags-file t)
+                                            ;; Not very confident on `visit-tags-table'
+                                            ;; So manually `setq-local' again
+                                            (setq-local tags-file-name ,tags-file))))
+                                       (t
+                                        (message "Failed to create tags file."))))
+                                    )))
       ;; Use the comint filter for proper handling of carriage motion
       ;; (see `comint-inhibit-carriage-motion'),.
       (set-process-filter proc 'comint-output-filter))))
@@ -388,13 +391,12 @@ If FORCE is t, the commmand is executed without checking the timer."
                       (mapconcat (lambda (n) (format "-not -name \"%s\"" n))
                                  counsel-etags-ignore-filenames " ")
                       ctags-pg))
-         (tags-file (concat (file-name-as-directory src-dir) "TAGS"))
+         (tags-file (file-truename (concat (file-name-as-directory src-dir) "TAGS")))
          (doit (or force (not (file-exists-p tags-file)))))
     ;; always update cli options
     (when doit
       (message "%s at %s" (if counsel-etags-debug cmd "Scan") default-directory)
-      (counsel-etags-async-shell-command cmd)
-      (visit-tags-table tags-file t))))
+      (counsel-etags-async-shell-command cmd tags-file))))
 
 ;;;###autoload
 (defun counsel-etags-directory-p (regex)
@@ -548,7 +550,8 @@ IS-STRING is t if the candidate is string."
     ;; ONLY when the checksum (file size) is different from the physical file size,
     ;; update cache by reading from physical file.
     ;; Not precise but acceptable algorithm.
-    (when (and (file-exists-p tags-file)
+    (when (and tags-file
+               (file-exists-p tags-file)
                (not (string= (counsel-etags-cache-checksum tags-file)
                              (setq file-size (format "%s" (nth 7 (file-attributes tags-file)))))))
       (if counsel-etags-debug (message "Read file .... %s %s" (counsel-etags-cache-checksum tags-file) file-size))
@@ -566,7 +569,8 @@ IS-STRING is t if the candidate is string."
       (message "force-tags-file=%s tags-file=%s" force-tags-file tags-file)
       (message "tagname=%s" tagname))
 
-    (when (setq file-content (counsel-etags-cache-content tags-file) )
+    (when (and tags-file
+               (setq file-content (counsel-etags-cache-content tags-file)))
       (with-temp-buffer
         (insert file-content)
         (modify-syntax-entry ?_ "w")
@@ -661,7 +665,8 @@ Focus on TAGNAME if it's not nil."
   ;; flash
   (if (fboundp 'xref-push-marker-stack)
       (xref-push-marker-stack mark)
-    (ring-insert find-tag-marker-ring mark)))
+    (and (boundp 'find-tag-marker-ring)
+         (ring-insert find-tag-marker-ring mark))))
 
 (defun counsel-etags-remember (cand dir)
   "Remember CAND whose `default-directory' is DIR."
