@@ -7,7 +7,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.4") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.6.1
+;; Version: 1.6.2
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -507,8 +507,8 @@ IS-STRING is t if the candidate is string."
       (sort cands `(lambda (item1 item2)
                      (let* ((a (counsel-etags--strip-path (file-truename (if ,is-string item1 (cadr item1))) ,strip-count))
                             (b (counsel-etags--strip-path (file-truename (if ,is-string item2 (cadr item2))) ,strip-count)))
-                       (< (string-distance a ,ref)
-                          (string-distance b ,ref))))))
+                       (< (string-distance a ,ref t)
+                          (string-distance b ,ref t))))))
      ((and ref
            counsel-etags-candidates-optimize-limit
            (< (length cands) counsel-etags-candidates-optimize-limit))
