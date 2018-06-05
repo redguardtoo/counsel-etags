@@ -358,13 +358,9 @@ So we don't need project root at all.  Or you can setup `counsel-etags-project-r
                                           ;; reload tags-file
                                           (when (and ,tags-file (file-exists-p ,tags-file))
                                             (message "Tags file %s was created." ,tags-file)
-                                            (visit-tags-table ,tags-file t)
-                                            ;; Not very confident on `visit-tags-table'
-                                            ;; So manually `setq-local' again
-                                            (setq-local tags-file-name ,tags-file))))
+                                            (visit-tags-table ,tags-file t))))
                                        (t
-                                        (message "Failed to create tags file."))))
-                                    )))
+                                        (message "Failed to create tags file.")))))))
       ;; Use the comint filter for proper handling of carriage motion
       ;; (see `comint-inhibit-carriage-motion'),.
       (set-process-filter proc 'comint-output-filter))))
