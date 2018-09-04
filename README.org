@@ -12,9 +12,7 @@ Place counsel-etags.el somewhere (say ~/.emacs/lisp), add below code into =.emac
 (require 'counsel-etags)
 #+end_src
 
-You also need make sure "Exuberant Ctags" and "GNU Find" exist.
-
-"Ctags" (Universal Ctags is recommended) and "GNU Find" should exist so this program works out of box.
+If "Exuberant Ctags" (some people prefer "Universal Ctags" because it's more actively maintained) and "GNU Find" are already installed, this program works out of box.
 
 Or else, use `counsel-etags-update-tags-backend' to customize shell command to generate tags file.
 
@@ -80,7 +78,7 @@ You can filter the candidates with =keyword1 !keyword2 keyword3=. So we display 
 
 You can also press =C-c C-o= to create a buffer containing all candidates.
 
-In summary, all functionalities from powerful [[https://github.com/abo-abo/swiper][ivy]] are supported perfectly.
+In summary, all functionality from powerful [[https://github.com/abo-abo/swiper][ivy]] are supported perfectly.
 ** Grep program
 If [[https://github.com/BurntSushi/ripgrep][ripgrep]] is installed, it's used as faster grep program. Or else we fallback to =grep=.
 
