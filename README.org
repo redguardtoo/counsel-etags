@@ -1,9 +1,10 @@
-* counsel-etags (v1.7.0)
+* counsel-etags (v1.7.1)
 
 Fast and complete Ctags solution using ivy-completion.
 
 It's tested in huge projects like Linux Kernel source and it still works even with *one million* candidates.
 
+It works on Linux/Windows/macOS.
 * Install
 Place counsel-etags.el somewhere (say ~/.emacs/lisp), add below code into =.emacs=:
 
@@ -12,9 +13,11 @@ Place counsel-etags.el somewhere (say ~/.emacs/lisp), add below code into =.emac
 (require 'counsel-etags)
 #+end_src
 
-If "Exuberant Ctags" (some people prefer "Universal Ctags" because it's more actively maintained) and "GNU Find" are already installed, this program works out of box.
+If "Exuberant Ctags" (some people prefer "Universal Ctags" because it's more actively maintained) , this program works out of box.
 
-Or else, use `counsel-etags-update-tags-backend' to customize shell command to generate tags file.
+"GNU Find" is used if it's installed but *it's optional*.
+
+Or else, use =counsel-etags-update-tags-backend= to customize command.
 
 Please note [[https://github.com/redguardtoo/emacs.d/issues/697#issuecomment-394141015][it's reported]] "Exuberant Ctags" v5.8.5 is buggy.
 * Usage
