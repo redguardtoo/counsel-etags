@@ -276,7 +276,7 @@ So we don't need project root at all.  Or you can setup `counsel-etags-project-r
 (defun counsel-etags-win-path (executable-name drive)
   "Guess EXECUTABLE-NAME's full path in Cygwin on DRIVE."
   (let* ((path (concat drive ":\\\\cygwin64\\\\bin\\\\" executable-name ".exe")))
-    (if (file-executable-p path) path)))
+    (if (file-exists-p path) path)))
 
 (defun counsel-etags-guess-program (executable-name)
   "Guess path from its EXECUTABLE-NAME on Windows.
