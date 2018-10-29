@@ -436,6 +436,8 @@ If FORCE is t, the command is executed without checking the timer."
          (cmd (counsel-etags-get-scan-command find-pg ctags-pg))
          (tags-file (file-truename (concat (file-name-as-directory src-dir) "TAGS")))
          (doit (or force (not (file-exists-p tags-file)))))
+    (unless ctags-pg
+      (error "Please install Ctags before running this program!"))
     (when counsel-etags-debug (message "counsel-etags-scan-dir-internal called => src-dir=%s force=%s find-pg=%s ctags-pg=%s default-directory=%s cmd=" src-dir force find-pg ctags-pg default-directory cmd))
     ;; always update cli options
     (when doit
