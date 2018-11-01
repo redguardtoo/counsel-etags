@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.4") (counsel "0.9.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.7.1
+;; Version: 1.7.2
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -191,6 +191,13 @@ You can setup it using \".dir-locals.el\"."
   :group 'counsel-etags
   :type 'string)
 
+(defcustom counsel-etags-ctags-options-file "~/.ctags"
+  "File to read options from, like \"~/.ctags\".
+Universal Ctags won't read options from \"~/.ctags\" by default.
+So force Universal Ctags to load \"~/.ctags\"."
+  :group 'counsel-etags
+  :type 'string)
+
 (defcustom counsel-etags-candidates-optimize-limit 256
   "Re-order candidates if candidate count is less than this variable's value.
 Candidates whose file path has Levenshtein distance to current file/directory.
@@ -283,6 +290,7 @@ So we don't need project root at all.  Or you can setup `counsel-etags-project-r
   (let* ((path (concat drive ":\\\\cygwin64\\\\bin\\\\" executable-name ".exe")))
     (if (file-exists-p path) path)))
 
+;;;###autoload
 (defun counsel-etags-guess-program (executable-name)
   "Guess path from its EXECUTABLE-NAME on Windows.
 Return nil if it's not found."
@@ -299,7 +307,7 @@ Return nil if it's not found."
 
 ;;;###autoload
 (defun counsel-etags-version ()
-  (message "1.7.1"))
+  (message "1.7.2"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -389,13 +397,22 @@ Return nil if it's not found."
   (let* ((emacs-executable (file-name-directory (expand-file-name invocation-name invocation-directory))))
     (replace-regexp-in-string "/" "\\\\" emacs-executable)))
 
+(defun counsel-etags-ctags-options-file-cli ()
+  "Create command line for `counsel-etags-ctags-options-file'."
+  (cond
+   (counsel-etags-ctags-options-file
+    (format "--options=\"%s\""
+            (file-truename counsel-etags-ctags-options-file)))
+   (t
+    "")))
+
 (defun counsel-etags-get-scan-command (find-pg ctags-pg)
   "Create scan command for SHELL from FIND-PG and CTAGS-PG."
   (let* ((cmd ""))
     (cond
      ;; use both find and ctags
      ((and find-pg ctags-pg)
-      (setq cmd (format "%s . \\( %s \\) -prune -o -type f -not -size +%sk %s -print | %s -e -L -"
+      (setq cmd (format "%s . \\( %s \\) -prune -o -type f -not -size +%sk %s -print | %s -e %s -L -"
                         find-pg
                         (mapconcat (lambda (p)
                                      (format "-iwholename \"*/%s\"" (counsel-etags-dir-pattern p)) )
@@ -403,17 +420,19 @@ Return nil if it's not found."
                         counsel-etags-max-file-size
                         (mapconcat (lambda (n) (format "-not -name \"%s\"" n))
                                    counsel-etags-ignore-filenames " ")
-                        ctags-pg)))
+                        ctags-pg
+                        (counsel-etags-ctags-options-file-cli))))
      ;; Use ctags only
      (ctags-pg
-      (setq cmd (format "%s %s %s -e -R ."
+      (setq cmd (format "%s %s %s -e %s -R ."
                         ctags-pg
                         (mapconcat (lambda (p)
                                      (format "--exclude=\"%s\"" (counsel-etags-dir-pattern p)) )
                                    counsel-etags-ignore-directories " ")
                         (mapconcat (lambda (p)
                                      (format "--exclude=\"%s\"" p))
-                                   counsel-etags-ignore-filenames " "))))
+                                   counsel-etags-ignore-filenames " ")
+                        (counsel-etags-ctags-options-file-cli))))
 
      ;; fall back to Emacs bundled etags
      (t
