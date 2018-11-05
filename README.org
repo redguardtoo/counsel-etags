@@ -1,4 +1,4 @@
-* counsel-etags (v1.7.2)
+* counsel-etags (v1.7.3)
 
 Fast and complete Ctags solution using ivy-completion.
 
@@ -32,6 +32,16 @@ That's it.
 
 If you prefer manually setup tags file. You only need run =M-x counsel-etags-scan-code= once or create tags file [[https://www.emacswiki.org/emacs/BuildTags][in your own way]].
 * Tips (OPTIONAL)
+** Options file
+Path of options file is defined in =counsel-etags-ctags-options-file=. Its default value is =~/.ctags=.
+
+Exuberant Ctags actually can NOT open option file ".ctags" through cli option.
+
+But path =~/.ctags= is OK because we use Emacs Lisp to load =~.ctags=.
+
+Please use file name like =ctags.cnf= instead =.ctags= when customize this variable.
+
+Universal Ctags does NOT have this bug.
 ** Ignore directories and files
 You can setup =counsel-etags-ignore-directories= and =counsel-etags-ignore-filenames=,
 #+begin_src elisp
