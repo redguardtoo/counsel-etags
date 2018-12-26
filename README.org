@@ -1,4 +1,4 @@
-* counsel-etags (v1.7.3)
+* counsel-etags (v1.7.4)
 
 Fast and complete Ctags solution using ivy-completion.
 
