@@ -993,7 +993,7 @@ Any tag whose sub-string matches regex will be listed.
 Step 2, user could filter tags."
   (interactive)
   (counsel-etags-tags-file-must-exist)
-  (let* ((tagname (read-string "Regex to match tag:"
+  (let* ((tagname (read-string "Regex to match tag: "
                                (or (counsel-etags-selected-str) ""))))
     (when (and tagname (not (string= tagname "")))
         (counsel-etags-find-tag-api tagname t))))
