@@ -1,4 +1,4 @@
-* counsel-etags (v1.7.4)
+* counsel-etags (v1.8.0)
 
 Fast and complete Ctags solution using ivy-completion.
 
@@ -54,10 +54,18 @@ You can setup =counsel-etags-ignore-directories= and =counsel-etags-ignore-filen
      (add-to-list 'counsel-etags-ignore-filenames "TAGS")
      (add-to-list 'counsel-etags-ignore-filenames "*.json")))
 #+end_src
-** Setup tags-file-name
-We try to setup Emacs global variable =tags-file-name= if it's nil.
+** Neither =tags-file-name= nor =tags-table-list= is used
+** Specify extra multiple tags files 
+=counsel-etags-extra-tags-files= lists extra tags file to parse.
 
-If it's not nil, we respect existing value of =tags-file-name=. Please note we don't support =tags-table-list=.
+Set it like =(setq counsel-etags-extra-tags-files ("/usr/include/TAGS" "/usr/local/include/TAGS"))=
+
+Tags files in =counsel-etags-extra-tags-files= should contain only tag with absolute path.
+
+Here is a shell CLI to create tags file:
+#+begin_src bash
+find /usr/include | ctags -e -L -
+#+end_src
 ** Auto update tags file
 #+begin_src elisp
 ;; Don't ask before rereading the TAGS files if they have changed
