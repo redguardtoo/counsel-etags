@@ -353,15 +353,15 @@ The file is also used by tags file auto-update process.")
   "Guess path from its EXECUTABLE-NAME on Windows.
 Return nil if it's not found."
   (cond
+   (t
+    (if (executable-find executable-name) (executable-find executable-name)))
    ((eq system-type 'windows-nt)
     (or (counsel-etags-win-path executable-name "c")
         (counsel-etags-win-path executable-name "d")
         (counsel-etags-win-path executable-name "e")
         (counsel-etags-win-path executable-name "f")
         (counsel-etags-win-path executable-name "g")
-        (counsel-etags-win-path executable-name "h")))
-   (t
-    (if (executable-find executable-name) (executable-find executable-name)))))
+        (counsel-etags-win-path executable-name "h")))))
 
 ;;;###autoload
 (defun counsel-etags-version ()
