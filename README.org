@@ -17,7 +17,7 @@ If "Exuberant Ctags" (some people prefer "Universal Ctags" because it's more act
 
 "GNU Find" is used if it's installed but *it's optional*.
 
-Or else, customize =counsel-etags-update-tags-backend= to customize command.
+Or else, customize =counsel-etags-update-tags-backend= to create tags file with your own CLI.
 
 Please note [[https://github.com/redguardtoo/emacs.d/issues/697#issuecomment-394141015][it's reported]] "Exuberant Ctags" v5.8.5 is buggy.
 * Usage
@@ -55,10 +55,10 @@ You can setup =counsel-etags-ignore-directories= and =counsel-etags-ignore-filen
      (add-to-list 'counsel-etags-ignore-filenames "*.json")))
 #+end_src
 ** Neither =tags-file-name= nor =tags-table-list= is used
-** Specify extra multiple tags files 
-=counsel-etags-extra-tags-files= lists extra tags file to parse.
+** Specify multiple tags files 
+=counsel-etags-extra-tags-files= contains extra tags file to parse.
 
-Set it like =(setq counsel-etags-extra-tags-files ("/usr/include/TAGS" "/usr/local/include/TAGS"))=
+Set it like =(setq counsel-etags-extra-tags-files '("/usr/include/TAGS" "/usr/local/include/TAGS"))=
 
 Tags files in =counsel-etags-extra-tags-files= should contain only tag with absolute path.
 
