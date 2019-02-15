@@ -1174,7 +1174,9 @@ the tags updating might not happen."
 Extended regex is used, like (pattern1|pattern2)."
   (cond
    ((counsel-etags-has-quick-grep)
-    (format "%s %s \"%s\" --"
+    ;; "--hidden" force ripgrep to search hidden files/directories, that's default
+    ;; behaviour of grep
+    (format "%s --hidden %s \"%s\" --"
             (concat (executable-find "rg")
                     ;; (if counsel-etags-debug " --debug")
                     " -n -M 512 --no-heading --color never -s --path-separator /")
