@@ -6,14 +6,14 @@ It's tested in huge projects like Linux Kernel source and it still works even wi
 
 It works on Linux/Windows/macOS.
 * Install
-Place counsel-etags.el somewhere (say ~/.emacs/lisp), add below code into =.emacs=:
+Place =counsel-etags.el= somewhere (say =~/.emacs/lisp=), add below code into =.emacs=:
 
 #+begin_src elisp
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (require 'counsel-etags)
 #+end_src
 
-If "Exuberant Ctags" (some people prefer "Universal Ctags" because it's more actively maintained) , this program works out of box.
+If "Exuberant Ctags" (some people prefer "Universal Ctags" because it's more actively maintained) exists, this program works out of box.
 
 "GNU Find" is used if it's installed but *it's optional*.
 
@@ -29,6 +29,8 @@ This command will:
 - if no tag is find, it runs =ripgrep= or =grep= *automatically*
 
 That's it.
+
+Please note parsing tags file containing line with 2K characters could be slow. That's the known issue of Emacs Lisp. The program itself is perfectly fine.
 
 If you prefer manually setup tags file. You only need run =M-x counsel-etags-scan-code= once or create tags file [[https://www.emacswiki.org/emacs/BuildTags][in your own way]].
 * Tips (OPTIONAL)

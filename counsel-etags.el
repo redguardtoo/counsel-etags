@@ -1046,7 +1046,9 @@ Step 2, user could filter tags."
 
 ;;;###autoload
 (defun counsel-etags-find-tag-at-point ()
-  "Find tag using tagname at point."
+  "Find tag using tagname at point.
+Please note parsing tags file containing line with 2K characters could be slow.
+That's the known issue of Emacs Lisp.  The program itself is perfectly fine."
   (interactive)
   (counsel-etags-tags-file-must-exist)
   (let* ((tagname (counsel-etags-tagname-at-point))
@@ -1175,7 +1177,7 @@ Extended regex is used, like (pattern1|pattern2)."
   (cond
    ((counsel-etags-has-quick-grep)
     ;; "--hidden" force ripgrep to search hidden files/directories, that's default
-    ;; behaviour of grep
+    ;; behavior of grep
     (format "%s --hidden %s \"%s\" --"
             (concat (executable-find "rg")
                     ;; (if counsel-etags-debug " --debug")
