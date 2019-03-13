@@ -429,22 +429,9 @@ Return nil if it's not found."
 
 (defun counsel-etags-async-shell-command (command tags-file)
   "Execute string COMMAND and create TAGS-FILE asynchronously."
-  (let* (proc
-         (directory default-directory)
-         ;; Run the shell command without any interrupt or extra information
-         (buffer (generate-new-buffer "*Etags Generating Command*"))
-         (display-buffer-alist '(("Etags Generating Command" display-buffer-no-window))))
-    (with-current-buffer buffer
-      (setq buffer-read-only nil)
-      (let* ((inhibit-read-only t))
-        (erase-buffer))
-      (display-buffer buffer '(nil (allow-no-window . t)))
-      (setq default-directory directory)
-      (setq proc (start-process "Shell" buffer shell-file-name
-                                shell-command-switch command))
-      (set-process-sentinel proc `(lambda (process signal)
-
-                                    (let* ((status (process-status process)))
+  (let* ((proc (start-process "Shell" nil shell-file-name shell-command-switch command)))
+    (set-process-sentinel proc `(lambda (process signal)
+                                  (let* ((status (process-status process)))
                                     (when (memq status '(exit signal))
                                       (cond
                                        ((string= (substring signal 0 -1) "finished")
@@ -454,10 +441,7 @@ Return nil if it's not found."
                                           (when (and ,tags-file (file-exists-p ,tags-file))
                                             (message "Tags file %s was created." ,tags-file))))
                                        (t
-                                        (message "Failed to create tags file.")))))))
-      ;; Use the comint filter for proper handling of carriage motion
-      ;; (see `comint-inhibit-carriage-motion'),.
-      (set-process-filter proc 'comint-output-filter))))
+                                        (message "Failed to create tags file.")))))))))
 
 (defun counsel-etags-dir-pattern (dir)
   "Trim * from DIR."
