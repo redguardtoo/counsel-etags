@@ -37,8 +37,9 @@
   "Use CONTEXT to test CANDIDATE.  If return nil, the CANDIDATE is excluded."
   (cond
    ((plist-get context :local-only)
-    (let* ((src-file (plist-get context :file))
-           (def-file (plist-get candidate :file)))
+    (let* ((src-file (plist-get context :fullpath))
+           (def-file (plist-get candidate :fullpath)))
+      ;; (message "src-file=%s def-file=%s rlt=%s" src-file def-file (string= src-file def-file))
       (string= src-file def-file)))
    (t
     t)))

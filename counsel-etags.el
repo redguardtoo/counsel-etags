@@ -764,7 +764,8 @@ CONTEXT is extra information collected before find tag definition."
                      ;; file must be set after above variables
                      ;; (file (concat root-dir (etags-file-of-tag t)))
                      (file (etags-file-of-tag t))
-                     (cand (list :file file
+                     (cand (list :file file ; relative path
+                                 :fullpath (if (file-name-absolute-p file) file (concat root-dir file)) ; absolute path
                                  :line-number line-number
                                  :text text
                                  :tagname tagname)))

@@ -23,7 +23,7 @@
   (list
    :major-mode major-mode
    :line-number (line-number-at-pos)
-   :file (buffer-file-name)
+   :fullpath (and (buffer-file-name) (file-truename (buffer-file-name)))
    :font-face (get-text-property (point) 'face)
    :line-text (buffer-substring-no-properties
                (line-beginning-position)
@@ -77,4 +77,3 @@
 
 (provide 'counsel-etags-sdk)
 ;;; counsel-etags-sdk.el ends here
-
