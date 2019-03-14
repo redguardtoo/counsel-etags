@@ -1,6 +1,6 @@
 ;;; counsel-etags-sdk.el --- counsel-etags SDK
 
-;; Copyright (C) 2018 Chen Bin
+;; Copyright (C) 2018, 2019 Chen Bin
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 ;;; counsel-etags-javascript.el --- rules to filter tags for javascript
 
-;; Copyright (C) 2018 Chen Bin
+;; Copyright (C) 2018, 2019 Chen Bin
 
 ;; Author: Chen Bin <chenbin DOT sh AT gmail DOT com>
 
