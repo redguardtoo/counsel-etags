@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.4") (counsel "0.10.0") (ivy "0.10.0"))
 ;; Keywords: tools, convenience
-;; Version: 1.8.1
+;; Version: 1.8.2
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -373,7 +373,7 @@ Return nil if it's not found."
 
 ;;;###autoload
 (defun counsel-etags-version ()
-  (message "1.8.1"))
+  (message "1.8.2"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()

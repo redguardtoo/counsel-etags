@@ -53,7 +53,12 @@
   ;; one hello function in test.js
   ;; one hello function, one hello method and one test method in hello.js
   (let* (cands context)
-    ;; all functions across project
+    ;; all tags across project, case insensitive, fuzzy match.
+    ;; So "CHello" is also included
+    (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "hello" t nil))
+    (should (eq (length cands) 4))
+
+    ;; all tags across project, case sensitive
     (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "hello" nil nil))
     (should (eq (length cands) 3))
 
