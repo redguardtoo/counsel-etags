@@ -1108,8 +1108,17 @@ the tags updating might not happen."
 
 (defun counsel-etags-read-keyword (hint)
   "Read keyword with HINT."
-  (let* ((str (if (region-active-p) (counsel-etags-selected-str)
-                (read-string hint))))
+  (let* ((str (cond
+               ((region-active-p)
+                (setq counsel-git-grep-history (add-to-list 'counsel-git-grep-history
+                                                            (counsel-etags-selected-str)))
+                (counsel-etags-selected-str))
+               (t
+                (read-from-minibuffer hint
+                                      (thing-at-point 'symbol)
+                                      nil
+                                      nil
+                                      'counsel-git-grep-history)))))
     (when str
       (cond
        ((region-active-p)
