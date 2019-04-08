@@ -1,4 +1,4 @@
-* counsel-etags (v1.8.2)
+* counsel-etags (v1.8.3)
 
 [[https://travis-ci.org/redguardtoo/counsel-etags][https://travis-ci.org/redguardtoo/counsel-etags.svg?branch=master]]
 [[http://melpa.org/#/counsel-etags][file:http://melpa.org/packages/counsel-etags-badge.svg]] [[http://stable.melpa.org/#/counsel-etags][file:http://stable.melpa.org/packages/counsel-etags-badge.svg]]
@@ -101,7 +101,12 @@ In summary, all functionality from powerful [[https://github.com/abo-abo/swiper]
 ** Grep program
 If [[https://github.com/BurntSushi/ripgrep][ripgrep]] is installed, it's used as faster grep program. Or else we fallback to =grep=.
 
-You can use =M-x counsel-etags-grep= or =M-x counsel-etags-grep-symbol-at-point= to grep in current project.
+Use =M-x counsel-etags-grep= to grep in project root.
+
+Use =M-x counsel-etags-grep-current-directory= to grep current directory.
+
+Use =C-u num M-x counsel-etags-grep-current-directory= to grep NUM level up of current directory. If NUM is nil or 0, current directory is grepped
+
 ** Windows
 No extra setup is needed if you install Cygwin to its default location on any driver except make sure "Exuberant Ctags" has been installed through Cygwin. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-tags-program=, and =counsel-etags-grep-program=.
 * Bug Report
