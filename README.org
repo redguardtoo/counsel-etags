@@ -6,6 +6,8 @@
 Fast, energy-saving, and powerful code navigation solution.
 
 It's been tested on Linux/Windows/macOS.
+
+[[file:demo.png]]
 * Install
 You can install =counsel-etags= from [[https://melpa.org/#/counsel-etags][MELPA]] with =package.el= (=M-x package-install git-gutter=).
 
