@@ -879,6 +879,13 @@ Focus on TAGNAME if it's not nil."
   "Remember CAND whose `default-directory' is DIR."
   (add-to-list 'counsel-etags-tag-history (cons cand dir)))
 
+(defun counsel-etags--time-cost (start-time)
+  "Show time cost since START-TIME."
+  (let* ((time-passed (float-time (time-since start-time))))
+    (format "%.01f second%s"
+            time-passed
+            (if (<= time-passed 2) "" "s"))))
+
 (defun counsel-etags-open-tag-cand (tagname cands time)
   "Find TAGNAME from CANDS.  Open tags file at TIME."
   ;; mark current point for `pop-tag-mark'
@@ -891,8 +898,8 @@ Focus on TAGNAME if it's not nil."
                                    dir
                                    tagname))
      (t
-      (ivy-read (format  "Find Tag (%.01f seconds): "
-                         (float-time (time-since time)))
+      (ivy-read (format  "Find Tag (%s): "
+                         (counsel-etags--time-cost time))
                 cands
                 :action `(lambda (e)
                            (counsel-etags-remember e ,dir)
@@ -1089,9 +1096,8 @@ the tags updating might not happen."
        (t
         (setq counsel-etags-timer (current-time))
         (funcall counsel-etags-update-tags-backend)
-        (message "counsel-etags took %d seconds to update TAGS!"
-                 (- (float-time (current-time))
-                    (float-time counsel-etags-timer))))))))
+        (message "counsel-etags took %s to update TAGS!"
+                 (counsel-etags--time-cost counsel-etags-timer)))))))
 
 (defun counsel-etags-unquote-regex-parens (str)
   "Unquote regexp parentheses in STR."
@@ -1216,10 +1222,10 @@ ROOT is root directory to grep."
                        counsel-etags-opts-cache)
 
     ;; Slow down grep 10 times
-    (ivy-read (concat hint (format "Grep \"%s\" at %s (%.01f seconds): "
+    (ivy-read (concat hint (format "Grep \"%s\" at %s (%s): "
                                    keyword
                                    dir-summary
-                                   (float-time (time-since time))))
+                                   (counsel-etags--time-cost time)))
               cands
               :history 'counsel-git-grep-history ; share history with counsel
               :action `(lambda (item)
