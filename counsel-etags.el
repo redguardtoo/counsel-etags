@@ -44,9 +44,9 @@
 ;; Tips:
 ;; - Add below code into "~/.emacs" to AUTOMATICALLY update tags file:
 ;;
-;;   ;; Don't ask before re-reading changed TAGS files
+;;   ;; Don't ask before reloading updated tags files
 ;;   (setq tags-revert-without-query t)
-;;   ;; NO warning when loading large TAGS files
+;;   ;; NO warning when loading large tag files
 ;;   (setq large-file-warning-threshold nil)
 ;;   (add-hook 'prog-mode-hook
 ;;     (lambda ()
@@ -175,6 +175,9 @@ find /usr/include | ctags -e -L -"
   '(;; VCS
     ;; project misc
     "*.log"
+    ;; rusty-tags
+    "rusty-tags.vim"
+    "rusty-tags.emacs"
     ;; Ctags
     "tags"
     "TAGS"
@@ -250,6 +253,11 @@ You can setup it using \".dir-locals.el\"."
   :group 'counsel-etags
   :type 'string)
 
+(defcustom counsel-etags-tags-file-name "TAGS"
+  "Tags file name."
+  :group 'counsel-etags
+  :type 'string)
+
 (defcustom counsel-etags-ctags-options-file "~/.ctags"
   "File to read options from, like \"~/.ctags\".
 Universal Ctags won't read options from \"~/.ctags\" by default.
@@ -285,7 +293,7 @@ The parameter of hook is full path of tags file."
   :type 'hook)
 
 (defcustom counsel-etags-update-interval 300
-  "The interval (seconds) to update TAGS.
+  "The interval (seconds) to update tags file.
 Used by `counsel-etags-virtual-update-tags'.
 Default value is 300 seconds."
   :group 'counsel-etags
@@ -333,7 +341,7 @@ So we don't need project root at all.  Or you can setup `counsel-etags-project-r
 
 (defvar counsel-etags-debug nil "Enable debug mode.")
 
-;; Timer to run auto-update TAGS.
+;; Timer to run auto-update tags file
 (defvar counsel-etags-timer nil "Internal timer.")
 
 (defvar counsel-etags-keyword nil "The keyword to grep.")
@@ -389,11 +397,13 @@ Return nil if it's not found."
 
 (defun counsel-etags-get-tags-file-path (dir)
   "Get full path of tags file from DIR."
-  (and dir (file-truename (concat (file-name-as-directory dir) "TAGS"))))
+  (and dir (file-truename (concat (file-name-as-directory dir)
+                                  counsel-etags-tags-file-name))))
 
 (defun counsel-etags-locate-tags-file ()
   "Find tags file: Search `counsel-etags-tags-file-history' and parent directories."
-  (counsel-etags-get-tags-file-path (locate-dominating-file default-directory "TAGS")))
+  (counsel-etags-get-tags-file-path (locate-dominating-file default-directory
+                                                            counsel-etags-tags-file-name)))
 
 (defun counsel-etags-tags-file-directory ()
   "Directory of tags file."
@@ -575,11 +585,26 @@ Return nil if it's not found."
          (file (or buffer-file-name default-directory "")))
     (string-match-p regex file)))
 
-(defun counsel-etags-read-file (file)
-  "Return FILE content."
+(defun counsel-etags-read-file-internal (file)
+  "Read FILE content."
   (with-temp-buffer
     (insert-file-contents file)
     (buffer-string)))
+
+(defun counsel-etags-read-file (file)
+  "Return FILE content with child files included."
+  (let* ((raw-content (counsel-etags-read-file-internal file))
+         (start 0)
+         (re "^\\([^,]+\\),include$")
+         included
+         (extra-content ""))
+    (while (setq start (string-match re raw-content start))
+      (when (file-exists-p (setq included (match-string 1 raw-content)))
+        (setq extra-content (concat extra-content
+                                    "\n"
+                                    (counsel-etags-read-file-internal included))))
+      (setq start (+ start (length included))))
+    (concat raw-content extra-content)))
 
 (defmacro counsel-etags--tset (table x y val row-width)
   "Set TABLE cell at position (X, Y) with VAL and ROW-WIDTH."
