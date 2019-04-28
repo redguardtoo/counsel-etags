@@ -69,7 +69,12 @@
 ;;        ;; counsel-etags-ignore-filenames supports wildcast
 ;;        (add-to-list 'counsel-etags-ignore-filenames "TAGS")
 ;;        (add-to-list 'counsel-etags-ignore-filenames "*.json")))
-
+;;
+;;  - Rust programming language is supported. The easiest setup is a ".dir-locals.el"
+;;  in root directory. The content of .dir-locals.el" is as below,
+;;   ((nil . ((counsel-etags-update-tags-backend . (lambda (src-dir) (shell-command "rusty-tags emacs")))
+;;            (counsel-etags-tags-file-name . "rusty-tags.emacs"))))
+;;
 ;; See https://github.com/redguardtoo/counsel-etags/ for more tips.
 
 ;;; Code:
