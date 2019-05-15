@@ -1,4 +1,4 @@
-* counsel-etags (v1.8.3)
+* counsel-etags (v1.8.3)                                                        :noexport:
 
 [[https://travis-ci.org/redguardtoo/counsel-etags][https://travis-ci.org/redguardtoo/counsel-etags.svg?branch=master]]
 [[http://melpa.org/#/counsel-etags][file:http://melpa.org/packages/counsel-etags-badge.svg]] [[http://stable.melpa.org/#/counsel-etags][file:http://stable.melpa.org/packages/counsel-etags-badge.svg]]
@@ -8,6 +8,28 @@ Fast, energy-saving, and powerful code navigation solution.
 It's been tested on Linux/Windows/macOS.
 
 [[file:demo.png]]
+* Table of Content                                                              :noexport:TOC:
+- [[#install][Install]]
+- [[#usage][Usage]]
+- [[#tips-optional][Tips (OPTIONAL)]]
+  - [[#options-file][Options file]]
+  - [[#ignore-directories-and-files][Ignore directories and files]]
+  - [[#dependency-on-emacs-apis-is-minimum][Dependency on Emacs APIs is minimum]]
+  - [[#specify-multiple-tags-files][Specify multiple tags files]]
+  - [[#auto-update-tags-file][Auto update tags file]]
+  - [[#rust-programming-language][Rust programming language]]
+  - [[#list-all-tags][List all tags]]
+  - [[#two-step-tag-matching-using-regular-expression-and-filter][Two-step tag matching using regular expression and filter]]
+  - [[#open-recent-tag][Open recent tag]]
+  - [[#ctags-setup][Ctags setup]]
+  - [[#search-with-negative-pattern][Search with negative pattern]]
+  - [[#grep-program][Grep program]]
+  - [[#windows][Windows]]
+- [[#step-by-step-guide][Step by step guide]]
+  - [[#step-1-a-toy-c-project][Step 1, a toy C project]]
+  - [[#step-2-use-counsel-etags][Step 2, use =counsel-etags=]]
+- [[#bug-report][Bug Report]]
+
 * Install
 You can install =counsel-etags= from [[https://melpa.org/#/counsel-etags][MELPA]] with =package.el= (=M-x package-install counsel-etags=).
 
@@ -31,6 +53,8 @@ That's it.
 Please note parsing tags file containing line with 2K characters could be slow. That's the known issue of Emacs Lisp. The program itself is perfectly fine.
 
 If you prefer manually setup tags file. You only need run =M-x counsel-etags-scan-code= once or create tags file [[https://www.emacswiki.org/emacs/BuildTags][in your own way]].
+
+Please read [[#step-by-step-guide][Step by step guide]] if you are still confused.
 * Tips (OPTIONAL)
 ** Options file
 Path of options file is defined in =counsel-etags-ctags-options-file=. Its default value is =~/.ctags=.
@@ -54,7 +78,14 @@ You can setup =counsel-etags-ignore-directories= and =counsel-etags-ignore-filen
      (add-to-list 'counsel-etags-ignore-filenames "TAGS")
      (add-to-list 'counsel-etags-ignore-filenames "*.json")))
 #+end_src
-** Neither =tags-file-name= nor =tags-table-list= is used
+** Dependency on Emacs APIs is minimum
+Any tag related API or variable is not used.
+
+Neither =tags-file-name= nor =tags-table-list= is used.
+
+Any commands (=visit-tags-table=, =xref-find-references=, ...) mentioned by other online tutorials are not used.
+
+I intend to keep this package is completely independent.
 ** Specify multiple tags files 
 =counsel-etags-extra-tags-files= contains extra tags file to parse.
 
@@ -121,5 +152,32 @@ Use =C-u num M-x counsel-etags-grep-current-directory= to grep NUM level up of c
 
 ** Windows
 No extra setup is needed if you install Cygwin to its default location on any driver except make sure "Exuberant Ctags" has been installed through Cygwin. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-tags-program=, and =counsel-etags-grep-program=.
+* Step by step guide
+You need use Linux/Cygwin/MSYS2. CLI in macOS should be similar.
+
+** Step 1, a toy C project
+#+begin_src bash
+mkdir -p ~/proj1 && cd ~/proj1
+cat > .dir-locals.el <<EOF
+((nil . ((counsel-etags-project-root . "~/proj1/")
+         (counsel-etags-extra-tags-files . ("./include/TAGS")))))
+EOF
+cat > hello.c <<EOF
+include <stdio.h>
+
+void fn() {
+}
+
+int main() {
+    printf('hello world');
+    fn();
+    return 0;
+}
+EOF
+mkdir -p include && cd include && find /usr/include | ctags -e -L -
+#+end_src
+
+** Step 2, use =counsel-etags=
+Open =hello.c= in Emacs (say "YES" if Emacs ask any question), move focus over symbol "fn" or "printf", run =counsel-etags-find-tag-at-point=.
 * Bug Report
 Check [[https://github.com/redguardtoo/counsel-etags]].
