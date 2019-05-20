@@ -22,12 +22,12 @@ It's been tested on Linux/Windows/macOS.
   - [[#two-step-tag-matching-using-regular-expression-and-filter][Two-step tag matching using regular expression and filter]]
   - [[#open-recent-tag][Open recent tag]]
   - [[#ctags-setup][Ctags setup]]
-  - [[#search-with-negative-pattern][Search with negative pattern]]
+  - [[#search-with-exclusion-patterns][Search with exclusion patterns]]
   - [[#grep-program][Grep program]]
   - [[#windows][Windows]]
 - [[#step-by-step-guide][Step by step guide]]
   - [[#step-1-a-toy-c-project][Step 1, a toy C project]]
-  - [[#step-2-use-counsel-etags][Step 2, use =counsel-etags=]]
+  - [[#step-2-navigate-code][Step 2, navigate code]]
 - [[#bug-report][Bug Report]]
 
 * Install
@@ -44,9 +44,9 @@ Please note [[https://github.com/redguardtoo/emacs.d/issues/697#issuecomment-394
 Run =M-x counsel-etags-find-tag-at-point= to navigate in code files without any setup.
 
 This command will:
-- find project root folder and scan code *automatically*
-- find correct tag *automatically*
-- if no tag is find, it runs =ripgrep= or =grep= *automatically*
+- Find project root folder and scan code *automatically*
+- Find correct tag *automatically*
+- If no tag is find, it runs =ripgrep= or =grep= *automatically*
 
 That's it.
 
@@ -133,8 +133,8 @@ The easiest way to setup rusty-tags per project is to create [[https://www.gnu.o
 Google "filetype:ctags site:github.com". Here is [[https://gist.github.com/redguardtoo/b12ddae3b8010a276e9b][mine]].
 
 You may need configure environment variable "HOME" on Windows because Ctags looks for "%HOME%/.ctags" by default.
-** Search with negative pattern
-All counsel-etags commands supports negative pattern from [[https://github.com/abo-abo/swiper][ivy]].
+** Search with exclusion patterns
+All counsel-etags commands supports exclusion patterns from [[https://github.com/abo-abo/swiper][ivy]].
 
 You can filter the candidates with =keyword1 !keyword2 keyword3=. So we display only candidate containing =keyword1= but neither =keyword2= nor =keyword3=.
 
@@ -153,10 +153,12 @@ Use =C-u num M-x counsel-etags-grep-current-directory= to grep NUM level up of c
 ** Windows
 No extra setup is needed if you install Cygwin to its default location on any driver except make sure "Exuberant Ctags" has been installed through Cygwin. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-tags-program=, and =counsel-etags-grep-program=.
 * Step by step guide
-You need use Linux/Cygwin/MSYS2. CLI in macOS should be similar.
+You need use Linux/Cygwin/MSYS2. It should be similar in macOS but I'm not sure whether the directory =/usr/include= exists.
 
 ** Step 1, a toy C project
+Run below script in Bash shell to create a toy project.
 #+begin_src bash
+#!/bin/bash
 mkdir -p ~/proj1 && cd ~/proj1
 cat > .dir-locals.el <<EOF
 ((nil . ((counsel-etags-project-root . "~/proj1/")
@@ -177,7 +179,7 @@ EOF
 mkdir -p include && cd include && find /usr/include | ctags -e -L -
 #+end_src
 
-** Step 2, use =counsel-etags=
+** Step 2, navigate code
 Open =hello.c= in Emacs (say "YES" if Emacs ask any question), move focus over symbol "fn" or "printf", run =counsel-etags-find-tag-at-point=.
 * Bug Report
 Check [[https://github.com/redguardtoo/counsel-etags]].

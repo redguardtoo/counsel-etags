@@ -53,7 +53,7 @@
 ;;       (add-hook 'after-save-hook
 ;;                 'counsel-etags-virtual-update-tags 'append 'local)))
 ;;
-;; - You can use ivy's negative pattern to filter candidates.
+;; - You can use ivy's exclusion patterns to filter candidates.
 ;;   For example, input "keyword1 !keyword2 keyword3" means:
 ;;   "(keyword1 and (not (or keyword2 keyword3)))"
 ;;
@@ -956,8 +956,8 @@ Focus on TAGNAME if it's not nil."
      (t
       (ivy--regex re)))))
 
-(defun counsel-etags-negative-regex (patterns)
-  "Extract negative regex from PATTERNS."
+(defun counsel-etags-exclusion-regex (patterns)
+  "Extract exclusion PATTERNS."
   (let* ((re (cadr patterns)))
     (unless re (setq re ""))
     ;; remove trailing spaces
@@ -980,12 +980,12 @@ Focus on TAGNAME if it's not nil."
     ;; I prefer build the regex by myself
     (let* ((patterns (split-string string " *!"))
            (pos-re (counsel-etags-positive-regex patterns))
-           (neg-re (counsel-etags-negative-regex patterns))
+           (neg-re (counsel-etags-exclusion-regex patterns))
            rlt)
       ;; use positive pattern to get collection
       ;; when using dynamic collection
       (setq rlt (counsel-etags-collect-cands pos-re t))
-      ;; then use negative pattern to exclude candidates
+      ;; then use exclusion patterns to exclude candidates
       (when (and rlt neg-re)
         (setq rlt (delq nil (mapcar
                              `(lambda (s)
