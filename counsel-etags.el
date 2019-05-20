@@ -58,8 +58,9 @@
 ;;   "(keyword1 and (not (or keyword2 keyword3)))"
 ;;
 ;; - `counsel-etags-extra-tags-files' contains extra tags files to parse.
-;;   Set it like '(setq counsel-etags-extra-tags-files '("/usr/include/TAGS" "/usr/local/include/TAGS"))'
-;;   Tags files in `counsel-etags-extra-tags-files' should contain only tag with absolute path.
+;;   Set it like '(setq counsel-etags-extra-tags-files '("./TAGS" "/usr/include/TAGS" "$PROJ1/include/TAGS"))'
+;;   Files in `counsel-etags-extra-tags-files' should contain only symbol with absolute path.
+;;
 ;; - You can setup `counsel-etags-ignore-directories' and `counsel-etags-ignore-filenames',
 ;;   (eval-after-load 'counsel-etags
 ;;     '(progn
@@ -95,9 +96,22 @@
 
 
 (defcustom counsel-etags-extra-tags-files nil
-  "Other tags files to read.  They are not updated automatically.
-Path in tags file should be absolute path.  Sample CLI to create tags file:
-find /usr/include | ctags -e -L -"
+  "List of extra tags files to load.  They are not updated automatically.
+
+A typical format is
+
+    (\"./TAGS\" \"/usr/include/TAGS\" \"$PROJECT/*/include/TAGS\")
+
+Environment variables can be inserted between slashes (`/').
+They will be replaced by their definition.  If a variable does
+not exist, it is replaced (silently) with an empty string.
+
+Symbol location inside tags file should use absolute path.
+A CLI to create tags file:
+
+  find /usr/include | ctags -e -L -
+
+"
   :group 'counsel-etags
   :type '(repeat 'string))
 
@@ -805,7 +819,8 @@ CONTEXT is extra information collected before find tag definition."
     (setq rlt (mapcar 'car (counsel-etags-sort-candidates-maybe cands 3 nil)))
     (when counsel-etags-extra-tags-files
       ;; don't sort candidate from 3rd party libraries
-      (dolist (file counsel-etags-extra-tags-files)
+      (unless (featurep 'find-file) (require 'find-file))
+      (dolist (file (ff-list-replace-env-vars counsel-etags-extra-tags-files))
         (when (setq cands (counsel-etags-extract-cands-from-tags-file file
                                                                      tagname
                                                                      fuzzy
