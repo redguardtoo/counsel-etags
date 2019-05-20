@@ -120,6 +120,11 @@ A CLI to create tags file:
   :group 'counsel-etags
   :type 'boolean)
 
+(defcustom counsel-etags-can-skip-project-root nil
+  "If t, scanning project root is optional."
+  :group 'counsel-etags
+  :type 'boolean)
+
 ;; (defvar counsel-etags-unit-test-p nil
 ;;   "Running unit test.  This is internal variable.")
 
@@ -808,10 +813,11 @@ CONTEXT is extra information collected before find tag definition."
                                (counsel-etags-get-tags-file-path dir)))
          (tags-file (or force-tags-file
                         (counsel-etags-locate-tags-file)))
-         (cands (counsel-etags-extract-cands-from-tags-file tags-file
-                                                            tagname
-                                                            fuzzy
-                                                            context)))
+         (cands (and tags-file (counsel-etags-extract-cands-from-tags-file tags-file
+                                                                           tagname
+                                                                           fuzzy
+                                                                           context))))
+
     ;; TODO:
     ;; - cands from project tags file need be sorted
     ;;   cands from third party tags file will not be sorted
@@ -938,7 +944,8 @@ Focus on TAGNAME if it's not nil."
   "Make sure tags file does exist."
   (let* ((tags-file (counsel-etags-locate-tags-file))
          src-dir)
-    (when (not tags-file)
+    (when (and (not tags-file)
+               (not counsel-etags-can-skip-project-root))
       (setq src-dir (read-directory-name "Ctags will scan code at:"
                                          (counsel-etags-locate-project)))
       (cond
@@ -1014,27 +1021,26 @@ Focus on TAGNAME if it's not nil."
   (let* ((time (current-time))
          (dir (counsel-etags-tags-file-directory)))
     (when counsel-etags-debug (message "counsel-etags-find-tag-api called => %s %s %s" tagname fuzzy dir))
-    ;; Dir should not be nil
-    (when dir
-      (cond
-       ((not tagname)
-        ;; OK, need use ivy-read to find candidate
-        (ivy-read "Fuzz matching tags:"
-                  #'counsel-etags-list-tag-function
-                  :history 'counsel-git-grep-history
-                  :dynamic-collection t
-                  :action `(lambda (e)
-                             (counsel-etags-open-file-api e ,dir))
-                  :caller 'counsel-etags-find-tag))
+    ;; Dir could be nil. User could use `counsel-etags-extra-tags-files' instead
+    (cond
+     ((not tagname)
+      ;; OK, need use ivy-read to find candidate
+      (ivy-read "Fuzz matching tags:"
+                #'counsel-etags-list-tag-function
+                :history 'counsel-git-grep-history
+                :dynamic-collection t
+                :action `(lambda (e)
+                           (counsel-etags-open-file-api e ,dir))
+                :caller 'counsel-etags-find-tag))
 
-       ((not (setq counsel-etags-find-tag-candidates
-                   (counsel-etags-collect-cands tagname fuzzy dir context)))
-        ;; OK let's try grep if no tag found
-        (counsel-etags-grep tagname "No tag found. "))
+     ((not (setq counsel-etags-find-tag-candidates
+                 (counsel-etags-collect-cands tagname fuzzy dir context)))
+      ;; OK let's try grep if no tag found
+      (counsel-etags-grep tagname "No tag found. "))
 
-       (t
-        ;; open the one selected candidate
-        (counsel-etags-open-tag-cand tagname counsel-etags-find-tag-candidates time))))))
+     (t
+      ;; open the one selected candidate
+      (counsel-etags-open-tag-cand tagname counsel-etags-find-tag-candidates time)))))
 
 
 ;;;###autoload
