@@ -1,4 +1,4 @@
-* counsel-etags (v1.8.3)                                                        :noexport:
+* counsel-etags (v1.8.4)                                                        :noexport:
 
 [[https://travis-ci.org/redguardtoo/counsel-etags][https://travis-ci.org/redguardtoo/counsel-etags.svg?branch=master]]
 [[http://melpa.org/#/counsel-etags][file:http://melpa.org/packages/counsel-etags-badge.svg]] [[http://stable.melpa.org/#/counsel-etags][file:http://stable.melpa.org/packages/counsel-etags-badge.svg]]
@@ -24,6 +24,7 @@ It's been tested on Linux/Windows/macOS.
   - [[#ctags-setup][Ctags setup]]
   - [[#search-with-exclusion-patterns][Search with exclusion patterns]]
   - [[#grep-program][Grep program]]
+  - [[#customize-grep-keyword][Customize grep keyword]]
   - [[#windows][Windows]]
 - [[#step-by-step-guide][Step by step guide]]
   - [[#step-1-a-toy-c-project][Step 1, a toy C project]]
@@ -150,6 +151,31 @@ Use =M-x counsel-etags-grep-current-directory= to grep current directory.
 
 Use =C-u num M-x counsel-etags-grep-current-directory= to grep NUM level up of current directory. If NUM is nil or 0, current directory is grepped
 
+** Customize grep keyword
+Users could set =counsel-etags-convert-grep-keyword= to customize grep keyword.
+
+For example, below setup enable =counsel-etags-grep= to search Chinese using [[https://github.com/cute-jumper/pinyinlib.el][pinyinlib]],
+#+begin_src elisp
+(unless (featurep 'pinyinlib) (require 'pinyinlib))
+(setq counsel-etags-convert-grep-keyword
+  (lambda (keyword)
+    (if (and keyword (> (length keyword) 0))
+        (pinyinlib-build-regexp-string keyword t)
+      keyword)))
+#+end_src
+
+Or create a new grep command =my-grep-by-pinyin=,
+#+begin_src elisp
+(defun my-grep-by-pinin ()
+  (interactive)
+  (unless (featurep 'pinyinlib) (require 'pinyinlib))
+  (let* ((counsel-etags-convert-grep-keyword
+          (lambda (keyword)
+            (if (and keyword (> (length keyword) 0))
+                (pinyinlib-build-regexp-string keyword t)
+              keyword))))
+    (counsel-etags-grep)))
+#+end_src
 ** Windows
 No extra setup is needed if you install Cygwin to its default location on any driver except make sure "Exuberant Ctags" has been installed through Cygwin. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-tags-program=, and =counsel-etags-grep-program=.
 * Step by step guide
