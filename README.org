@@ -12,7 +12,7 @@ It's been tested on Linux/Windows/macOS.
 - [[#install][Install]]
 - [[#usage][Usage]]
 - [[#tips-optional][Tips (OPTIONAL)]]
-  - [[#options-file][Options file]]
+  - [[#configuration-file][Configuration file]]
   - [[#ignore-directories-and-files][Ignore directories and files]]
   - [[#dependency-on-emacs-apis-is-minimum][Dependency on Emacs APIs is minimum]]
   - [[#specify-multiple-tags-files][Specify multiple tags files]]
@@ -51,24 +51,24 @@ This command will:
 
 That's it.
 
-Please note parsing tags file containing line with 2K characters could be slow. That's the known issue of Emacs Lisp. The program itself is perfectly fine.
+Please note parsing tags file containing long line could be slow. That's the known issue of Emacs Lisp. The program itself is perfectly fine.
 
-If you prefer manually setup tags file. You only need run =M-x counsel-etags-scan-code= once or create tags file [[https://www.emacswiki.org/emacs/BuildTags][in your own way]].
+If you prefer manually setup tags file, you only need run =M-x counsel-etags-scan-code= once or create tags file [[https://www.emacswiki.org/emacs/BuildTags][in your own way]].
 
 Please read [[#step-by-step-guide][Step by step guide]] if you are still confused.
 * Tips (OPTIONAL)
-** Options file
-Path of options file is defined in =counsel-etags-ctags-options-file=. Its default value is =~/.ctags=.
+** Configuration file
+Path of the Configuration file is defined in =counsel-etags-ctags-options-file=. Its default value is =~/.ctags=.
 
-Exuberant Ctags actually can NOT open option file ".ctags" through cli option.
+Exuberant Ctags actually can NOT open configuration file ".ctags" through cli option.
 
-But path =~/.ctags= is OK because we use Emacs Lisp to load =~.ctags=.
+We use Emacs Lisp to load =~/.ctags= to workaround this issue.
 
-Please use file name like =ctags.cnf= instead =.ctags= when customize this variable.
+Please use file name like =ctags.cnf= instead =.ctags= when customize this variable for Exuberant Ctags.
 
-Universal Ctags does NOT have this bug.
+Universal Ctags does NOT have this problem.
 ** Ignore directories and files
-You can setup =counsel-etags-ignore-directories= and =counsel-etags-ignore-filenames=,
+You can set up =counsel-etags-ignore-directories= and =counsel-etags-ignore-filenames=,
 #+begin_src elisp
 (eval-after-load 'counsel-etags
   '(progn
@@ -92,7 +92,7 @@ I intend to keep this package is completely independent.
 
 Set it like =(setq counsel-etags-extra-tags-files '("/usr/include/TAGS" "/usr/local/include/TAGS"))=
 
-Tags files in =counsel-etags-extra-tags-files= should contain only tag with absolute path.
+Files in =counsel-etags-extra-tags-files= should contain only tag with absolute path.
 
 Here is a shell CLI to create tags file:
 #+begin_src bash
@@ -119,7 +119,7 @@ Tags file for [[https://www.rust-lang.org/][Rust programming language]] can be g
 
 Run =rusty-tags emacs= in shell to generate tags file. You also need =(setq counsel-etags-tags-file-name "rusty-tags.emacs")=.
 
-The easiest way to setup rusty-tags per project is to create [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html][.dir-locals.el]] in project root,
+The easiest way to set up rusty-tags per project is to create [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html][.dir-locals.el]] in project root,
 #+begin_src elisp
 ((nil . ((counsel-etags-update-tags-backend . (lambda (src-dir) (shell-command "rusty-tags emacs")))
          (counsel-etags-tags-file-name . "rusty-tags.emacs"))))

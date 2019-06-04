@@ -38,7 +38,7 @@
 ;;   `counsel-etags-grep' to grep
 ;;   `counsel-etags-grep-current-directory' to grep in current directory
 ;;   `counsel-etags-recent-tag' to open recent tag
-;;   `counsel-etags-find-tag' to two step tag matching use regular expression and filter
+;;   `counsel-etags-find-tag' to two steps tag matching use regular expression and filter
 ;;   `counsel-etags-list-tag' to list all tags
 ;;
 ;; Tips:
@@ -64,7 +64,7 @@
 ;;
 ;;   Files in `counsel-etags-extra-tags-files' have only symbol with absolute path.
 ;;
-;; - You can setup `counsel-etags-ignore-directories' and `counsel-etags-ignore-filenames',
+;; - You can set up `counsel-etags-ignore-directories' and `counsel-etags-ignore-filenames',
 ;;   (eval-after-load 'counsel-etags
 ;;     '(progn
 ;;        ;; counsel-etags-ignore-directories does NOT support wildcast
@@ -74,9 +74,10 @@
 ;;        (add-to-list 'counsel-etags-ignore-filenames "TAGS")
 ;;        (add-to-list 'counsel-etags-ignore-filenames "*.json")))
 ;;
-;;  - Rust programming language is supported. The easiest setup is a ".dir-locals.el"
-;;  in root directory. The content of .dir-locals.el" is as below,
-;;   ((nil . ((counsel-etags-update-tags-backend . (lambda (src-dir) (shell-command "rusty-tags emacs")))
+;;  - Rust programming language is supported.
+;;    The easiest setup is to use ".dir-locals.el".
+;;   in root directory.  The content of .dir-locals.el" is as below,
+;;   ((nil . ((counsel-etags-update-tags-backend . (lambda (src-dir) (shell-command "rusty-tags Emacs")))
 ;;            (counsel-etags-tags-file-name . "rusty-tags.emacs"))))
 ;;
 ;;  - User could use `counsel-etags-convert-grep-keyword' to customize grep keyword.
@@ -121,9 +122,7 @@ not exist, it is replaced (silently) with an empty string.
 Symbol location inside tags file should use absolute path.
 A CLI to create tags file:
 
-  find /usr/include | ctags -e -L -
-
-"
+  find /usr/include | ctags -e -L -"
   :group 'counsel-etags
   :type '(repeat 'string))
 
@@ -142,9 +141,7 @@ Here is code to enable grepping Chinese using pinyinlib,
          (lambda (keyword)
            (if (and keyword (> (length keyword) 0))
                (pinyinlib-build-regexp-string keyword t)
-             keyword)))
-
-"
+             keyword)))"
   :group 'counsel-etags
   :type 'function)
 
@@ -296,12 +293,12 @@ Here is code to enable grepping Chinese using pinyinlib,
 
 (defcustom counsel-etags-project-file '("TAGS" "tags" ".svn" ".hg" ".git")
   "The file/directory used to locate project root directory.
-You can setup it using \".dir-locals.el\"."
+You can set up it in \".dir-locals.el\"."
   :group 'counsel-etags
   :type '(repeat 'string))
 
 (defcustom counsel-etags-project-root nil
-  "Project root directory.  The directory is automatically detect if it's nil."
+  "Project root directory.  The directory automatically detects if it's nil."
   :group 'counsel-etags
   :type 'string)
 
@@ -334,13 +331,13 @@ You may set it to nil to disable re-ordering for performance reason."
 
 (defcustom counsel-etags-max-file-size 512
   "Ignore files bigger than `counsel-etags-max-file-size' kilobytes.
-This option is ignore if GNU find is not installed."
+This option is ignored if GNU find is not installed."
   :group 'counsel-etags
   :type 'integer)
 
 (defcustom counsel-etags-after-update-tags-hook nil
   "Hook after tags file is actually updated.
-The parameter of hook is full path of tags file."
+The parameter of hook is full path of the tags file."
   :group 'counsel-etags
   :type 'hook)
 
@@ -359,7 +356,7 @@ On Windows program path separator IS four backward slashes by default."
 
 (defcustom counsel-etags-tags-program nil
   "Tags Program.  Program is automatically detected if it's nil.
-You can setup this variable manually instead.
+You can set up this variable manually instead.
 If you use Emacs etags, set this variable to \"etags\".'.
 If you use Exuberant Ctags, set this variable to \"ctags -e -L\".'.
 You may add extra options to tags program.  For example, as C developer
@@ -388,7 +385,8 @@ The function has same parameters as `counsel-etags-scan-dir-internal'."
 
 (defconst counsel-etags-no-project-msg
   "No project found.  You can create tags file using `counsel-etags-scan-code'.
-So we don't need project root at all.  Or you can setup `counsel-etags-project-root'."
+So we don't need the project root at all.
+Or you can set up `counsel-etags-project-root'."
   "Message to display when no project is found.")
 
 (defvar counsel-etags-debug nil "Enable debug mode.")
@@ -1133,7 +1131,7 @@ That's the known issue of Emacs Lisp.  The program itself is perfectly fine."
 (defun counsel-etags-virtual-update-tags()
   "Scan code and create tags file again.
 It's the interface used by other hooks or commands.
-the tags updating might not happen."
+The tags updating might not happen."
   (interactive)
   (let* ((dir (and buffer-file-name
                    (file-name-directory buffer-file-name)))
