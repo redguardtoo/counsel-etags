@@ -40,6 +40,7 @@
 ;;   `counsel-etags-recent-tag' to open recent tag
 ;;   `counsel-etags-find-tag' to two steps tag matching use regular expression and filter
 ;;   `counsel-etags-list-tag' to list all tags
+;;   `counsel-etags-update-tags-force' to update current tags file by force
 ;;
 ;; Tips:
 ;; - Add below code into "~/.emacs" to AUTOMATICALLY update tags file:
@@ -1309,6 +1310,18 @@ ROOT is root directory to grep."
   (unless level (setq level 0))
   (let* ((root (counsel-etags-parent-directory level default-directory)))
     (counsel-etags-grep nil nil root)))
+
+;;;###autoload
+(defun counsel-etags-update-tags-force (&optional forced-tags-file)
+  "Update current tags file now using default implementation."
+  (interactive)
+  (let* ((tags-file (or forced-tags-file
+                        (counsel-etags-locate-tags-file))))
+    (when tags-file
+      (counsel-etags-scan-dir (file-name-directory (file-truename tags-file)))
+      (run-hook-with-args 'counsel-etags-after-update-tags-hook tags-file)
+      (unless counsel-etags-quiet-when-updating-tags
+        (message "%s is updated!" tags-file)))))
 
 ;; {{ occur setup
 (defun counsel-etags-tag-occur-api (items)

@@ -20,6 +20,7 @@ It's been tested on Linux/Windows/macOS.
   - [[#rust-programming-language][Rust programming language]]
   - [[#list-all-tags][List all tags]]
   - [[#two-step-tag-matching-using-regular-expression-and-filter][Two-step tag matching using regular expression and filter]]
+  - [[#force-update-current-tags-file][Force update current tags file]]
   - [[#open-recent-tag][Open recent tag]]
   - [[#ctags-setup][Ctags setup]]
   - [[#search-with-exclusion-patterns][Search with exclusion patterns]]
@@ -128,6 +129,8 @@ The easiest way to set up rusty-tags per project is to create [[https://www.gnu.
 =M-x counsel-etags-list-tag=
 ** Two-step tag matching using regular expression and filter
 =M-x counsel-etags-find-tag=
+** Force update current tags file
+Run =counsel-etags-update-tags-force=. Tags file in project root should exist before running this command.
 ** Open recent tag
 =M-x counsel-etags-recent-tag=
 ** Ctags setup
