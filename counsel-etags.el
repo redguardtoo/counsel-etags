@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "24.4") (counsel "0.10.0") (ivy "0.10.0"))
 ;; Keywords: tools, convenience
-;; Version: 1.8.4
+;; Version: 1.8.5
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -432,7 +432,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "1.8.4"))
+  (message "1.8.5"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -936,6 +936,9 @@ Focus on TAGNAME if it's not nil."
 
 (defun counsel-etags-remember (cand dir)
   "Remember CAND whose `default-directory' is DIR."
+  (setq counsel-etags-tag-history
+        (cl-remove-if `(lambda (s) (string= ,cand (car s)))
+                      counsel-etags-tag-history))
   (add-to-list 'counsel-etags-tag-history (cons cand dir)))
 
 (defun counsel-etags--time-cost (start-time)
