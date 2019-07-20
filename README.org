@@ -12,6 +12,7 @@ It's been tested on Linux/Windows/macOS.
 - [[#install][Install]]
 - [[#usage][Usage]]
 - [[#tips-optional][Tips (OPTIONAL)]]
+  - [[#set-up-with-use-package][Set up with use-package]]
   - [[#configuration-file][Configuration file]]
   - [[#ignore-directories-and-files][Ignore directories and files]]
   - [[#dependency-on-emacs-apis-is-minimum][Dependency on Emacs APIs is minimum]]
@@ -58,6 +59,21 @@ If you prefer manually setup tags file, you only need run =M-x counsel-etags-sca
 
 Please read [[#step-by-step-guide][Step by step guide]] if you are still confused.
 * Tips (OPTIONAL)
+** Set up with [[https://github.com/jwiegley/use-package][use-package]]
+Please place =add-hook= code inside =:init= section,
+#+begin_src elisp
+(use-package counsel-etags
+  :ensure t
+  :bind (("C-]" . counsel-etags-find-tag-at-point))
+  :init
+  (add-hook 'prog-mode-hook
+        (lambda ()
+          (add-hook 'after-save-hook
+            'counsel-etags-virtual-update-tags 'append 'local)))
+  :config
+  (setq counsel-etags-update-interval 60)
+  (add-to-list 'counsel-etags-ignore-directories "build"))
+#+end_src
 ** Configuration file
 Path of the Configuration file is defined in =counsel-etags-ctags-options-file=. Its default value is =~/.ctags=.
 
