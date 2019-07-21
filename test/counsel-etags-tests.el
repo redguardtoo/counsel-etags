@@ -89,8 +89,8 @@
     ;; the function in the external file is at the top
     (should (string-match "test.js" (caar cands)))
     ;; sort the candidate by string-distance from "hello.js"
-    (let* ((buffer-file-name (get-full-path "hello.js")))
-      (should (string-match "hello.js" (caar (counsel-etags-sort-candidates-maybe cands 3 nil)))))))
+    (let* ((f (get-full-path "hello.js")))
+      (should (string-match "hello.js" (caar (counsel-etags-sort-candidates-maybe cands 3 nil f)))))))
 
 (ert-deftest counsel-etags-test-tags-file-cache ()
   (let* (cands)
