@@ -1,4 +1,4 @@
-* counsel-etags (v1.8.6)
+* counsel-etags (v1.8.7)
 
 [[https://travis-ci.org/redguardtoo/counsel-etags][https://travis-ci.org/redguardtoo/counsel-etags.svg?branch=master]]
 [[http://melpa.org/#/counsel-etags][file:http://melpa.org/packages/counsel-etags-badge.svg]] [[http://stable.melpa.org/#/counsel-etags][file:http://stable.melpa.org/packages/counsel-etags-badge.svg]]
@@ -9,10 +9,12 @@ It's been tested on Linux/Windows/macOS.
 
 [[file:demo.png]]
 * Table of Content                                                              :noexport:TOC:
+- [[#counsel-etags-v187][counsel-etags (v1.8.7)]]
 - [[#install][Install]]
 - [[#usage][Usage]]
 - [[#tips-optional][Tips (OPTIONAL)]]
   - [[#set-up-with-use-package][Set up with use-package]]
+  - [[#insert-extra-content-into-tags-file-after-its-updated][Insert extra content into tags file after it's updated]]
   - [[#configuration-file][Configuration file]]
   - [[#ignore-directories-and-files][Ignore directories and files]]
   - [[#dependency-on-emacs-apis-is-minimum][Dependency on Emacs APIs is minimum]]
@@ -74,6 +76,12 @@ Please place =add-hook= code inside =:init= section,
   (setq counsel-etags-update-interval 60)
   (add-to-list 'counsel-etags-ignore-directories "build"))
 #+end_src
+** Insert extra content into tags file after it's updated
+=counsel-etags-find-tag-name-function= finds tag name at point. If it returns nil, `find-tag-default' is used. `counsel-etags-word-at-point' gets word at point.
+
+User could append the extra content into tags file in =counsel-etags-after-update-tags-hook=.
+
+The parameter of hook is full path of the tags file. `counsel-etags-tags-line' is a tool function to help user.
 ** Configuration file
 Path of the Configuration file is defined in =counsel-etags-ctags-options-file=. Its default value is =~/.ctags=.
 
