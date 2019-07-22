@@ -501,6 +501,7 @@ Return nil if it's not found."
                                           (if counsel-etags-debug (message "`%s` executed." cmd))
                                           ;; reload tags-file
                                           (when (and ,tags-file (file-exists-p ,tags-file))
+                                            (run-hook-with-args 'counsel-etags-after-update-tags-hook ,tags-file)
                                             (message "Tags file %s was created." ,tags-file))))
                                        (t
                                         (message "Failed to create tags file.")))))))))
@@ -1336,7 +1337,6 @@ ROOT is root directory to grep."
                         (counsel-etags-locate-tags-file))))
     (when tags-file
       (counsel-etags-scan-dir (file-name-directory (file-truename tags-file)))
-      (run-hook-with-args 'counsel-etags-after-update-tags-hook tags-file)
       (unless counsel-etags-quiet-when-updating-tags
         (message "%s is updated!" tags-file)))))
 
