@@ -745,7 +745,7 @@ HASH store the previous distance."
   "Sort CANDS if `counsel-etags-candidates-optimize-limit' is t.
 STRIP-COUNT strips the string before calculating distance.
 IS-STRING is t if the candidate is string.
-CURRENT-FILE is use comparting candidate path"
+CURRENT-FILE is used to compare with candidate path."
   (let* ((ref (and current-file (counsel-etags--strip-path current-file strip-count))))
     (cond
      ;; don't sort candidates
