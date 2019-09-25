@@ -54,11 +54,13 @@ This command will:
 
 That's it.
 
-Please note parsing tags file containing long line could be slow. That's the known issue of Emacs Lisp. The program itself is perfectly fine.
+Please note it takes time to parse tags file which contains long lines. It's the known issue of Emacs Lisp. The program itself is fine.
 
 If you prefer manually setup tags file, you only need run =M-x counsel-etags-scan-code= once or create tags file [[https://www.emacswiki.org/emacs/BuildTags][in your own way]].
 
-Please read [[#step-by-step-guide][Step by step guide]] if you are still confused.
+Please read [[#step-by-step-guide][Step by step guide]] for more details.
+
+Run =M-x counsel-etags-list-tag-in-current-file= to list tags in current file.
 * Tips (OPTIONAL)
 ** Set up with [[https://github.com/jwiegley/use-package][use-package]]
 Please place =add-hook= code inside =:init= section,

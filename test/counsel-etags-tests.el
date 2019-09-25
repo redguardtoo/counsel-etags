@@ -47,6 +47,7 @@
   (concat
    (if load-file-name (file-name-directory load-file-name) default-directory)
    filename))
+
 (create-tags-file (get-full-path "TAGS"))
 
 (ert-deftest counsel-etags-test-find-tag ()
@@ -55,11 +56,11 @@
   (let* (cands context)
     ;; all tags across project, case insensitive, fuzzy match.
     ;; So "CHello" is also included
-    (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "hello" t nil))
+    (setq cands (counsel-etags-extract-cands (get-full-path "TAGS") "hello" t nil))
     (should (eq (length cands) 4))
 
     ;; all tags across project, case sensitive
-    (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "hello" nil nil))
+    (setq cands (counsel-etags-extract-cands (get-full-path "TAGS") "hello" nil nil))
     (should (eq (length cands) 3))
 
     ;; all functions
@@ -67,7 +68,7 @@
                         :line-number 10
                         :local-only nil ; here
                         :fullpath (get-full-path "hello.js")))
-    (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "hello" nil context))
+    (setq cands (counsel-etags-extract-cands (get-full-path "TAGS") "hello" nil context))
     (should (eq (length cands) 3))
 
     ;; local function in hello.js when :local-only is t
@@ -75,28 +76,28 @@
                         :line-number 10
                         :local-only t ; here
                         :fullpath (get-full-path "hello.js")))
-    (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "hello" nil context))
+    (setq cands (counsel-etags-extract-cands (get-full-path "TAGS") "hello" nil context))
     (should (eq (length cands) 2))
 
     ;; one function named "test"
-    (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "test" nil nil))
+    (setq cands (counsel-etags-extract-cands (get-full-path "TAGS") "test" nil nil))
     (should (eq (length cands) 1))))
 
 (ert-deftest counsel-etags-test-sort-cands-by-filename ()
   (let* (cands)
-    (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "hello" nil nil))
+    (setq cands (counsel-etags-extract-cands (get-full-path "TAGS") "hello" nil nil))
     (should (eq (length cands) 3))
     ;; the function in the external file is at the top
-    (should (string-match "test.js" (caar cands)))
+    (should (string-match "test.js" (car (nth 2 cands))))
     ;; sort the candidate by string-distance from "hello.js"
-    (let* ((f (get-full-path "hello.js")))
-      (should (string-match "hello.js" (caar (counsel-etags-sort-candidates-maybe cands 3 nil f)))))))
+    (let* ((f (get-full-path "test.js")))
+      (should (string-match "test.js" (car (nth 0 (counsel-etags-sort-candidates-maybe cands 3 nil f))))))))
 
 (ert-deftest counsel-etags-test-tags-file-cache ()
   (let* (cands)
     ;; clear cache
     (setq counsel-etags-cache nil)
-    (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "hello" nil nil))
+    (setq cands (counsel-etags-extract-cands (get-full-path "TAGS") "hello" nil nil))
     (should (eq (length cands) 3))
     ;; cache is filled
     (should counsel-etags-cache)
@@ -107,7 +108,7 @@
          (dir (get-full-path "")))
     ;; clear history
     (setq counsel-etags-tag-history nil)
-    (setq cands (counsel-etags-extract-cands-from-tags-file (get-full-path "TAGS") "hello" nil nil))
+    (setq cands (counsel-etags-extract-cands (get-full-path "TAGS") "hello" nil nil))
     (should (eq (length cands) 3))
     ;; only add tag when it's accessed by user manually
     (should (not counsel-etags-tag-history))
