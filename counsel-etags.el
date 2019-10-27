@@ -525,19 +525,21 @@ Return nil if it's not found."
 (defun counsel-etags-async-shell-command (command tags-file)
   "Execute string COMMAND and create TAGS-FILE asynchronously."
   (let* ((proc (start-process "Shell" nil shell-file-name shell-command-switch command)))
-    (set-process-sentinel proc `(lambda (process signal)
-                                  (let* ((status (process-status process)))
-                                    (when (memq status '(exit signal))
-                                      (cond
-                                       ((string= (substring signal 0 -1) "finished")
-                                        (let* ((cmd (car (cdr (cdr (process-command process))))))
-                                          (if counsel-etags-debug (message "`%s` executed." cmd))
-                                          ;; reload tags-file
-                                          (when (and ,tags-file (file-exists-p ,tags-file))
-                                            (run-hook-with-args 'counsel-etags-after-update-tags-hook ,tags-file)
-                                            (message "Tags file %s was created." ,tags-file))))
-                                       (t
-                                        (message "Failed to create tags file.")))))))))
+    (set-process-sentinel
+     proc
+     `(lambda (process signal)
+        (let* ((status (process-status process)))
+          (when (memq status '(exit signal))
+            (cond
+             ((string= (substring signal 0 -1) "finished")
+              (let* ((cmd (car (cdr (cdr (process-command process))))))
+                (if counsel-etags-debug (message "`%s` executed." cmd))
+                ;; reload tags-file
+                (when (and ,tags-file (file-exists-p ,tags-file))
+                  (run-hook-with-args 'counsel-etags-after-update-tags-hook ,tags-file)
+                  (message "Tags file %s was created." ,tags-file))))
+             (t
+              (message "Failed to create tags file.")))))))))
 
 (defun counsel-etags-dir-pattern (dir)
   "Trim * from DIR."
@@ -546,14 +548,15 @@ Return nil if it's not found."
 
 (defun counsel-etags-emacs-bin-path ()
   "Get Emacs binary path."
-  (let* ((emacs-executable (file-name-directory (expand-file-name invocation-name invocation-directory))))
+  (let* ((emacs-executable (file-name-directory (expand-file-name invocation-name
+                                                                  invocation-directory))))
     (replace-regexp-in-string "/" "\\\\" emacs-executable)))
 
 (defun counsel-etags-is-exuberant-ctags (ctags-program)
   "If CTAGS-PROGRAM is Exuberant Ctags."
-  (if (string-match-p "Exuberant Ctags"
-                      (shell-command-to-string (concat ctags-program " --version")))
-      t))
+  (let* ((cmd-output (shell-command-to-string (concat ctags-program " --version"))))
+    (and (not (string-match-p "Universal Ctags" cmd-output))
+         (string-match-p "Exuberant Ctags" cmd-output))))
 
 (defun counsel-etags-ctags-options-file-cli (ctags-program)
   "Use CTAGS-PROGRAM to create command line for `counsel-etags-ctags-options-file'."
