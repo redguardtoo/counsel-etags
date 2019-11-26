@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((counsel "0.13.0"))
 ;; Keywords: tools, convenience
-;; Version: 1.9.3
+;; Version: 1.9.4
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -468,7 +468,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "1.9.3"))
+  (message "1.9.4"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -543,7 +543,9 @@ Return nil if it's not found."
 
 (defun counsel-etags-dir-pattern (dir)
   "Trim * from DIR."
-  (replace-regexp-in-string "\\`[*]*" "" (replace-regexp-in-string "[*/]*\\'" "" dir)))
+  (setq dir (replace-regexp-in-string "[*/]*\\'" "" dir))
+  (setq dir (replace-regexp-in-string "\\`[*]*" "" dir))
+  (regexp-quote dir))
 
 
 (defun counsel-etags-emacs-bin-path ()
@@ -560,7 +562,6 @@ Return nil if it's not found."
 
 (defun counsel-etags-ctags-options-file-cli (ctags-program)
   "Use CTAGS-PROGRAM to create command line for `counsel-etags-ctags-options-file'."
-
   (cond
    ;; no options file
    ((or (not counsel-etags-ctags-options-file)
@@ -580,7 +581,7 @@ Return nil if it's not found."
 
    (t
     (format "--options=\"%s\""
-            (file-truename counsel-etags-ctags-options-file)))))
+            (regexp-quote (file-truename counsel-etags-ctags-options-file))))))
 
 (defun counsel-etags-get-scan-command (find-program ctags-program &optional code-file)
   "Create scan command for SHELL from FIND-PROGRAM and CTAGS-PROGRAM.
@@ -1404,19 +1405,19 @@ If SYMBOL-AT-POINT is nil, don't read symbol at point."
     (cond
      ((counsel-etags-has-quick-grep)
       (concat (mapconcat (lambda (e)
-                           (format "-g=\"!%s/*\"" e))
+                           (format "-g=\"!%s/*\"" (shell-quote-argument e)))
                          ignore-dirs " ")
               " "
               (mapconcat (lambda (e)
-                           (format "-g=\"!%s\"" e))
+                           (format "-g=\"!%s\"" (shell-quote-argument e)))
                          ignore-file-names " ")))
      (t
       (concat (mapconcat (lambda (e)
-                           (format "--exclude-dir=\"%s\"" e))
+                           (format "--exclude-dir=\"%s\"" (shell-quote-argument e)))
                          ignore-dirs " ")
               " "
               (mapconcat (lambda (e)
-                           (format "--exclude=\"%s\"" e))
+                           (format "--exclude=\"%s\"" (shell-quote-argument e)))
                          ignore-file-names " "))))))
 
 (defun counsel-etags-grep-cli (keyword use-cache)
