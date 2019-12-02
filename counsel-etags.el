@@ -1207,19 +1207,19 @@ CONTEXT is extra information collected before finding tag definition."
   "Create an index alist for the definitions in the current buffer."
   (let* ((ctags-program (or counsel-etags-tags-program
                             (counsel-etags-guess-program "ctags")))
-         (code-file buffer-file-name)
+         (code-file
+          (make-temp-file (expand-file-name "coet"
+                                            temporary-file-directory)))
          (tagname-re (concat "\\([^\177\001\n]+\\)\177\\("
                              "[^\177\001\n]+"
                              "\\)\001\\([0-9]+\\),\\([0-9]+\\)"))
          cmd
          imenu-items
          cands)
-    (unless code-file
-      (setq code-file
-            (make-temp-file (expand-file-name "coet"
-                                              temporary-file-directory))))
 
     (when (and code-file (file-exists-p code-file))
+      ;; write current buffer into code file
+      (write-region (point-min) (point-max) code-file)
       (setq cmd
             (cond
              (counsel-etags-command-to-scan-single-code-file
@@ -1254,7 +1254,8 @@ CONTEXT is extra information collected before finding tag definition."
             (counsel-etags-forward-line (cdr c))
             (search-forward name (point-at-eol))
             (forward-char (- (length name)))
-            (push (cons name (point-marker)) imenu-items)))))
+            (push (cons name (point-marker)) imenu-items))))
+      (delete-file code-file))
     imenu-items))
 
 ;;;###autoload
