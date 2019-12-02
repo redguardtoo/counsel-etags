@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((counsel "0.13.0"))
 ;; Keywords: tools, convenience
-;; Version: 1.9.4
+;; Version: 1.9.5
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -468,7 +468,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "1.9.4"))
+  (message "1.9.5"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -562,6 +562,7 @@ Return nil if it's not found."
 
 (defun counsel-etags-ctags-options-file-cli (ctags-program)
   "Use CTAGS-PROGRAM to create command line for `counsel-etags-ctags-options-file'."
+
   (cond
    ;; no options file
    ((or (not counsel-etags-ctags-options-file)
@@ -1208,9 +1209,9 @@ CONTEXT is extra information collected before finding tag definition."
   "Create an index alist for the definitions in the current buffer."
   (let* ((ctags-program (or counsel-etags-tags-program
                             (counsel-etags-guess-program "ctags")))
-         (code-file
-          (make-temp-file (expand-file-name "coet"
-                                            temporary-file-directory)))
+         (ext (if buffer-file-name (file-name-extension buffer-file-name) ""))
+         ;; ctags needs file extension
+         (code-file (make-temp-file "coet" nil (concat "." ext)))
          (tagname-re (concat "\\([^\177\001\n]+\\)\177\\("
                              "[^\177\001\n]+"
                              "\\)\001\\([0-9]+\\),\\([0-9]+\\)"))
