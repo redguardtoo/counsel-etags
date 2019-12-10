@@ -352,7 +352,10 @@ But path \"~/.ctags\" is OK because we use Emacs Lisp to load \"~.ctags\".
 
 Please use file name like \"ctags.cnf\" instead \".ctags\" when customize this variable.
 
-Universal Ctags does NOT have this bug."
+Universal Ctags does NOT have this bug.
+
+Please do NOT exclude system temporary folder in ctags configuration because imenu
+related functions need create and scan files in this folder."
   :group 'counsel-etags
   :type 'string)
 
@@ -539,13 +542,15 @@ Return nil if it's not found."
                   (run-hook-with-args 'counsel-etags-after-update-tags-hook ,tags-file)
                   (message "Tags file %s was created." ,tags-file))))
              (t
-              (message "Failed to create tags file.")))))))))
+              (message "Failed to create tags file.\nerror=%s\ncommand=%s"
+                       signal
+                       ,command)))))))))
 
 (defun counsel-etags-dir-pattern (dir)
   "Trim * from DIR."
   (setq dir (replace-regexp-in-string "[*/]*\\'" "" dir))
   (setq dir (replace-regexp-in-string "\\`[*]*" "" dir))
-  (regexp-quote dir))
+  dir)
 
 
 (defun counsel-etags-emacs-bin-path ()
@@ -582,7 +587,7 @@ Return nil if it's not found."
 
    (t
     (format "--options=\"%s\""
-            (regexp-quote (file-truename counsel-etags-ctags-options-file))))))
+            (file-truename counsel-etags-ctags-options-file)))))
 
 (defun counsel-etags-get-scan-command (find-program ctags-program &optional code-file)
   "Create scan command for SHELL from FIND-PROGRAM and CTAGS-PROGRAM.
@@ -1257,7 +1262,10 @@ CONTEXT is extra information collected before finding tag definition."
             (search-forward name (point-at-eol))
             (forward-char (- (length name)))
             (push (cons name (point-marker)) imenu-items))))
-      (delete-file code-file))
+
+      ;; clean up tmp file
+      (unless counsel-etags-debug (delete-file code-file)))
+
     imenu-items))
 
 ;;;###autoload
