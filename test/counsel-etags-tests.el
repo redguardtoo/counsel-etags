@@ -27,28 +27,22 @@
 (require 'counsel-etags-javascript)
 (require 'js)
 
-(defvar tags-file-content '("\014\nhello.js,124\n"
-                            "function hello() {\177hello\0011,0\n"
-                            "export class CHello {\177CHello\0013,21\n"
-                            " hello() {\177hello\0014,43\n"
-                            " test() {\177test\0016,59\n"
-                            "  hi() {\177hi\0018,74\n"
-                            "\014\ntest.js,29\n"
-                            "function hello() {\177hello\0011,0\n"))
-
-(defun create-tags-file (filepath)
-  (with-temp-buffer
-    (apply #'insert tags-file-content)
-    ;; not empty
-    (should (> (length (buffer-string)) 50))
-    (write-region (point-min) (point-max) filepath)))
-
 (defun get-full-path (filename)
   (concat
    (if load-file-name (file-name-directory load-file-name) default-directory)
    filename))
 
-(create-tags-file (get-full-path "TAGS"))
+;; ;; {{
+;; (defconst tags-file-content '("\014\nhello.js,124\n"
+;;                               "function hello() {\177hello\0011,0\n"
+;;                               "export class CHello {\177CHello\0013,21\n"
+;;                               " hello() {\177hello\0014,43\n"
+;;                               " test() {\177test\0016,59\n"
+;;                               "  hi() {\177hi\0018,74\n"
+;;                               "\014\ntest.js,29\n"
+;;                               "function hello() {\177hello\0011,0\n"))
+;; (create-tags-file (get-full-path "TAGS"))
+;; ;; }}
 
 (ert-deftest counsel-etags-test-find-tag ()
   ;; one hello function in test.js

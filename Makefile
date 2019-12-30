@@ -9,7 +9,6 @@ clean:
 	rm -f *~
 	rm -f \#*\#
 	rm -f *.elc
-	rm -f test/TAGS
 
 # Run tests.
 test: clean
