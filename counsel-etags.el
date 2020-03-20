@@ -181,6 +181,12 @@ The definition of word is customized by the user."
   :group 'counsel-etags
   :type 'function)
 
+(defcustom counsel-etags-maximum-candidates-to-clean 1024
+  "Maximum candidates to clean up before displaying to users.
+If candidates number is bigger than this value, show raw candidates without cleanup."
+  :group 'counsel-etags
+  :type 'integer)
+
 ;; (defvar counsel-etags-unit-test-p nil
 ;;   "Running unit test.  This is internal variable.")
 
@@ -951,6 +957,8 @@ CONTEXT is extra information collected before find tag definition."
                                                        context))
           ;; don't bother sorting candidates from third party tags file
           (setq rlt (append rlt (mapcar 'car cands))))))
+    (unless (> (length rlt) counsel-etags-maximum-candidates-to-clean)
+      (setq rlt (delq nil (delete-dups rlt))))
     rlt))
 
 (defun counsel-etags-encode(s)
@@ -1312,8 +1320,6 @@ That's the known issue of Emacs Lisp.  The program itself is perfectly fine."
          (context (counsel-etags-execute-collect-function)))
     (cond
      (tagname
-        ;; TODO try to get context here from rule and pass
-        ;; into API call
         (counsel-etags-find-tag-api tagname nil buffer-file-name context))
      (t
       (message "No tag at point")))))
