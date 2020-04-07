@@ -102,14 +102,13 @@ Universal Ctags does NOT have this problem.
 ** Ignore directories and files
 You can set up =counsel-etags-ignore-directories= and =counsel-etags-ignore-filenames=,
 #+begin_src elisp
-(eval-after-load 'counsel-etags
-  '(progn
-     ;; counsel-etags-ignore-directories does NOT support wildcast
-     (push "build_clang" counsel-etags-ignore-directories)
-     (push "build_clang" counsel-etags-ignore-directories)
-     ;; counsel-etags-ignore-filenames supports wildcast
-     (push "TAGS" counsel-etags-ignore-filenames)
-     (push "*.json" counsel-etags-ignore-filenames)))
+(with-eval-after-load 'counsel-etags
+  ;; counsel-etags-ignore-directories does NOT support wildcast
+  (push "build_clang" counsel-etags-ignore-directories)
+  (push "build_clang" counsel-etags-ignore-directories)
+  ;; counsel-etags-ignore-filenames supports wildcast
+  (push "TAGS" counsel-etags-ignore-filenames)
+  (push "*.json" counsel-etags-ignore-filenames))
 #+end_src
 ** Dependency on Emacs APIs is minimum
 Any tag related API or variable is not used.
