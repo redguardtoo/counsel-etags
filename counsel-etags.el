@@ -1275,8 +1275,8 @@ CONTEXT is extra information collected before finding tag definition."
           (let* ((name (car c)))
             (goto-char (point-min))
             (counsel-etags-forward-line (cdr c))
-            (search-forward name (point-at-eol))
-            (forward-char (- (length name)))
+            (when (search-forward name (point-at-eol) t)
+              (forward-char (- (length name))))
             (push (cons name (point-marker)) imenu-items))))
 
       ;; clean up tmp file
