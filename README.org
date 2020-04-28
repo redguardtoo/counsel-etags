@@ -67,6 +67,11 @@ Or just use native imenu command with below setup,
 #+begin_src elisp
 (setq imenu-create-index-function 'counsel-etags-imenu-default-create-index-function)
 #+end_src
+
+You can set =counsel-etags-imenu-excluded-names= to exclude imenu items by name.
+
+You can set =counsel-etags-imenu-excluded-types to exclude imenu items by type.
+
 * Tips (OPTIONAL)
 ** Set up with [[https://github.com/jwiegley/use-package][use-package]]
 Please place =add-hook= code inside =:init= section,
