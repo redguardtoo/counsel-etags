@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((counsel "0.13.0"))
 ;; Keywords: tools, convenience
-;; Version: 1.9.7
+;; Version: 1.9.8
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -51,8 +51,12 @@
 ;;   `counsel-etags-find-tag' to two steps tag matching use regular expression and filter
 ;;   `counsel-etags-list-tag' to list all tags
 ;;   `counsel-etags-update-tags-force' to update current tags file by force
+;;   `counsel-etags-ignore-config-file' specifies paths of ignore configuration files
+;;   (".gitignore", ".hgignore", etc).  Path is either absolute or relative to the tags file.
+;;
 ;;
 ;; Tips:
+;;
 ;; - Add below code into "~/.emacs" to AUTOMATICALLY update tags file:
 ;;
 ;;   ;; Don't ask before reloading updated tags files
@@ -120,6 +124,15 @@
 (defgroup counsel-etags nil
   "Complete solution to use ctags."
   :group 'tools)
+
+(defcustom counsel-etags-ignore-config-files
+  '(".gitignore"
+    ".hgignore"
+    "~/.ignore")
+  "Path of configuration file which specifies files that should ignore.
+Path is either absolute path or relative to the tags file."
+  :group 'counsel-etags
+  :type '(repeat string))
 
 (defcustom counsel-etags-smart-rules nil
   "Plugins to match filter out candidates when using `counsel-etags-find-tag-at-point'."
@@ -506,7 +519,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "1.9.7"))
+  (message "1.9.8"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -624,6 +637,17 @@ Return nil if it's not found."
     (format "--options=\"%s\""
             (file-truename counsel-etags-ctags-options-file)))))
 
+(defun counsel-etags-ctags-ingore-config ()
+  "Specify ignore configuration file (.gitignore, for example) for Ctags."
+  (let* (rlt configs filename)
+    (dolist (f counsel-etags-ignore-config-files)
+      (when (file-exists-p (setq filename (file-truename f)))
+        (push filename configs)))
+    (setq rlt (mapconcat (lambda (c) (format "--exclude=\"@%s\"" c)) configs " "))
+    (when counsel-etags-debug
+        (message "counsel-etags-ctags-ingore-config returns %s" rlt))
+    rlt))
+
 (defun counsel-etags-get-scan-command (find-program ctags-program &optional code-file)
   "Create scan command for SHELL from FIND-PROGRAM and CTAGS-PROGRAM.
 If CODE-FILE is a real file, the command scans it and output to stdout."
@@ -631,7 +655,7 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
     (cond
      ;; use both find and ctags
      ((and find-program ctags-program)
-      (setq cmd (format "%s . \\( %s \\) -prune -o -type f -not -size +%sk %s -print | %s -e %s -L -"
+      (setq cmd (format "%s . \\( %s \\) -prune -o -type f -not -size +%sk %s -print | %s -e %s %s -L -"
                         find-program
                         (mapconcat (lambda (p)
                                      (format "-iwholename \"*/%s\"" (counsel-etags-dir-pattern p)) )
@@ -640,11 +664,12 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
                         (mapconcat (lambda (n) (format "-not -name \"%s\"" n))
                                    counsel-etags-ignore-filenames " ")
                         ctags-program
-                        (counsel-etags-ctags-options-file-cli ctags-program))))
+                        (counsel-etags-ctags-options-file-cli ctags-program)
+                        (counsel-etags-ctags-ingore-config))))
 
      ;; Use ctags only
      (ctags-program
-      (setq cmd (format "%s %s %s -e %s %s -R %s"
+      (setq cmd (format "%s %s %s -e %s %s %s -R %s"
                         ctags-program
                         (mapconcat (lambda (p)
                                      (format "--exclude=\"*/%s/*\" --exclude=\"%s/*\""
@@ -655,6 +680,7 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
                                      (format "--exclude=\"%s\"" p))
                                    counsel-etags-ignore-filenames " ")
                         (counsel-etags-ctags-options-file-cli ctags-program)
+                        (counsel-etags-ctags-ingore-config)
                         ;; print a tabular, human-readable cross reference
                         ;; --<my-lang>-kinds=f still accept all user defined regex
                         ;; so we have to filter in Emacs Lisp
