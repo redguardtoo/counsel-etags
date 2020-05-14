@@ -1,8 +1,8 @@
 ;;; counsel-etags.el ---  Fast and complete Ctags/Etags solution using ivy  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2018, 2019 Chen Bin
+;; Copyright (C) 2018-2020 Chen Bin
 
-;; Author: Chen Bin <chenbin.sh@gmail.com>
+;; Author: Chen Bin <chenbin dot sh AT gmail dot com>
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((counsel "0.13.0"))
 ;; Keywords: tools, convenience
@@ -27,7 +27,8 @@
 ;;  Setup:
 ;;   "Ctags" (Universal Ctags is recommended) should exist.
 ;;   "GNU Find" is used if it's installed but it's optional.
-;;   Or else, customize `counsel-etags-update-tags-backend' to generate tags file
+;;   Or else, customize `counsel-etags-update-tags-backend' to generate tags file.
+;;   Please note etags bundled with Emacs is not supported any more.
 ;;
 ;; Usage:
 ;;
@@ -388,7 +389,7 @@ related functions need create and scan files in this folder."
 (defcustom counsel-etags-imenu-excluded-types
   '("variable")
   "Some imenu items should be excluded by type.
-Run 'ctags -x some-file' to see the type in second column of ouput."
+Run 'ctags -x some-file' to see the type in second column of output."
   :group 'counsel-etags
   :type '(repeat 'string))
 

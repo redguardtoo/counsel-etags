@@ -38,13 +38,14 @@ It's been tested on Linux/Windows/macOS.
 * Install
 You can install =counsel-etags= from [[https://melpa.org/#/counsel-etags][MELPA]] with =package.el= (=M-x package-install counsel-etags=).
 
-If "Exuberant Ctags" (some people prefer "Universal Ctags" because it's more actively maintained) exists, this program works out of box.
+If [[http://ctags.sourceforge.net/][Exuberant Ctags]] or [[https://ctags.io/][Universal Ctags]] exists, this program works out of box. Universal Ctags is actively maintained right now.
 
-"GNU Find" is used if it's installed but it's *optional*.
+[[https://www.gnu.org/software/findutils/manual/html_mono/find.html][GNU Find]] is used if it's installed but it's *optional*.
 
-Or else, customize =counsel-etags-update-tags-backend= to create tags file with your own CLI.
+Or else, customize =counsel-etags-update-tags-backend= to create tags file with your own CLI. Please note [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Create-Tags-Table.html#Create-Tags-Table][etags]] bundled with Emacs is not supported any more.
 
-Please note [[https://github.com/redguardtoo/emacs.d/issues/697#issuecomment-394141015][it's reported]] "Exuberant Ctags" v5.8.5 is buggy.
+[[https://github.com/redguardtoo/emacs.d/issues/697#issuecomment-394141015][It's reported]] "Exuberant Ctags" v5.8.5 is buggy.
+
 * Usage
 Run =M-x counsel-etags-find-tag-at-point= to navigate in code files without any setup.
 
