@@ -1052,6 +1052,21 @@ So we need *encode* the string."
     (goto-char (point-min))
     (forward-line (1- lnum))))
 
+(defun counsel-etags-push-marker-stack ()
+  "Save current position."
+  ;; un-select region
+  (let* ((mark (point-marker)))
+    (when (region-active-p) (pop-mark))
+    ;; save current position into evil jump list
+    ;; so user can press "C-o" to jump back
+    (when (fboundp 'evil-set-jump) (evil-set-jump))
+    ;; flash
+    (cond
+     ((fboundp 'xref-push-marker-stack)
+      (xref-push-marker-stack mark))
+     ((boundp 'find-tag-marker-ring)
+      (ring-insert find-tag-marker-ring mark)))))
+
 (defun counsel-etags-open-file-api (item dir &optional tagname)
   "Open ITEM while `default-directory' is DIR.
 Focus on TAGNAME if it's not nil."
@@ -1070,7 +1085,7 @@ Focus on TAGNAME if it's not nil."
       (message "counsel-etags-open-file-api called => dir=%s, linenum=%s, file=%s" dir linenum file))
 
     ;; item's format is like '~/proj1/ab.el:39: (defun hello() )'
-    (counsel-etags-push-marker-stack (point-marker))
+    (counsel-etags-push-marker-stack)
     ;; open file, go to certain line
     (find-file file)
     (counsel-etags-forward-line linenum))
@@ -1087,16 +1102,6 @@ Focus on TAGNAME if it's not nil."
   ;; flash, Emacs v25 only API
   (when (fboundp 'xref-pulse-momentarily)
     (xref-pulse-momentarily)))
-
-(defun counsel-etags-push-marker-stack (mark)
-  "Save current MARK (position)."
-  ;; un-select region
-  (if (region-active-p) (pop-mark))
-  ;; flash
-  (if (fboundp 'xref-push-marker-stack)
-      (xref-push-marker-stack mark)
-    (and (boundp 'find-tag-marker-ring)
-         (ring-insert find-tag-marker-ring mark))))
 
 (defun counsel-etags-remember (cand dir)
   "Remember CAND whose `default-directory' is DIR."
