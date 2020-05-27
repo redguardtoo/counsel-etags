@@ -31,6 +31,7 @@ It's been tested on Linux/Windows/macOS.
   - [[#grep-program][Grep program]]
   - [[#customize-grep-keyword][Customize grep keyword]]
   - [[#windows][Windows]]
+  - [[#ctagsexuberant][~/.ctags.exuberant]]
 - [[#step-by-step-guide][Step by step guide]]
   - [[#step-1-a-toy-c-project][Step 1, a toy C project]]
   - [[#step-2-navigate-code][Step 2, navigate code]]
@@ -129,7 +130,7 @@ Neither =tags-file-name= nor =tags-table-list= is used.
 Any commands (=visit-tags-table=, =xref-find-references=, ...) mentioned by other online tutorials are not used.
 
 I intend to keep this package is completely independent.
-** Specify multiple tags files 
+** Specify multiple tags files
 =counsel-etags-extra-tags-files= contains extra tags file to parse.
 
 Set it like =(setq counsel-etags-extra-tags-files '("/usr/include/TAGS" "/usr/local/include/TAGS"))=
@@ -229,6 +230,12 @@ Or create a new grep command =my-grep-by-pinyin=,
 #+end_src
 ** Windows
 No extra setup is needed if you install Cygwin to its default location on any driver except make sure "Exuberant Ctags" has been installed through Cygwin. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-ctags-program=, and =counsel-etags-grep-program=.
+** ~/.ctags.exuberant
+If base configuration file "~/.ctags.exuberant" exists, it's used to generate "~/.ctags" automatically.
+
+"~/.ctags.exuberant" is in Exuberant Ctags format, but the "~/.ctags" could be in Universal Ctags format if Universal Ctags is used.
+
+You can customize =counsel-etags-ctags-options-base= to change the path of base configuration file.
 * Step by step guide
 You need use Linux/Cygwin/MSYS2. It should be similar in macOS but I'm not sure whether the directory =/usr/include= exists.
 
