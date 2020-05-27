@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((counsel "0.13.0"))
 ;; Keywords: tools, convenience
-;; Version: 1.9.9
+;; Version: 1.9.10
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -110,6 +110,10 @@
 ;;  - User could append the extra content into tags file in `counsel-etags-after-update-tags-hook'.
 ;;    The parameter of hook is full path of the tags file.  `counsel-etags-tags-line' is a tool function
 ;;    to help user
+;;
+;;  - The ignore files (.gitignore, etc) are automatically detected and append to ctags
+;;    cli options as "--exclude="@/ignore/file/path".
+;;    Set `counsel-etags-ignore-config-files' to nil to turn off this feature.
 
 ;; See https://github.com/redguardtoo/counsel-etags/ for more tips.
 
@@ -432,19 +436,15 @@ Default value is 300 seconds."
   :group 'counsel-etags
   :type 'integer)
 
-(defcustom counsel-etags-tags-program nil
-  "Tags Program.  Program is automatically detected if it's nil.
-You can set up this variable manually instead.
-If you use Exuberant Ctags, set this variable to \"ctags -e -L\".'.
-You may add extra options to tags program.  For example, as C developer
-may set this variable to \"ctags --c-kinds=defgpstux -e -L\".
-On Windows program path separator IS four backward slashes by default."
+(defcustom counsel-etags-ctags-program nil
+  "Ctags Program.  Ctags is automatically detected if it's nil.
+You can set it to the full path of the executable."
   :group 'counsel-etags
   :type 'string)
 
 (defcustom counsel-etags-grep-program nil
   "Grep program.  Program is automatically detected if it's nil.
-On Windows program path separator IS four backward slashes by default."
+You can set it to the full path of the executable."
   :group 'counsel-etags
   :type 'string)
 
@@ -516,7 +516,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "1.9.9"))
+  (message "1.9.10"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -587,7 +587,7 @@ Return nil if it's not found."
                   (run-hook-with-args 'counsel-etags-after-update-tags-hook ,tags-file)
                   (message "Tags file %s was created." ,tags-file))))
              (t
-              (message "Failed to create tags file.\nerror=%s\ncommand=%s"
+              (message "Failed to create tags file. Error=%s CLI=%s"
                        signal
                        ,command)))))))))
 
@@ -646,7 +646,7 @@ If it's Emacs etags return nil."
     (format "--options=\"%s\""
             (file-truename counsel-etags-ctags-options-file)))))
 
-(defun counsel-etags-ctags-ingore-config ()
+(defun counsel-etags-ctags-ignore-config ()
   "Specify ignore configuration file (.gitignore, for example) for Ctags."
   (let* (rlt configs filename)
     (dolist (f counsel-etags-ignore-config-files)
@@ -654,11 +654,11 @@ If it's Emacs etags return nil."
         (push filename configs)))
     (setq rlt (mapconcat (lambda (c) (format "--exclude=\"@%s\"" c)) configs " "))
     (when counsel-etags-debug
-        (message "counsel-etags-ctags-ingore-config returns %s" rlt))
+        (message "counsel-etags-ctags-ignore-config returns %s" rlt))
     rlt))
 
 (defun counsel-etags-get-scan-command (ctags-program &optional code-file)
-  "Create scan command for SHELL CTAGS-PROGRAM.
+  "Create command for CTAGS-PROGRAM.
 If CODE-FILE is a real file, the command scans it and output to stdout."
   (let* ((cmd ""))
     (cond
@@ -675,21 +675,14 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
                                      (format "--exclude=\"%s\"" p))
                                    counsel-etags-ignore-filenames " ")
                         (counsel-etags-ctags-options-file-cli ctags-program)
-                        (counsel-etags-ctags-ingore-config)
+                        (counsel-etags-ctags-ignore-config)
                         ;; print a tabular, human-readable cross reference
                         ;; --<my-lang>-kinds=f still accept all user defined regex
                         ;; so we have to filter in Emacs Lisp
                         (if code-file "-x" "")
                         (if code-file (format "\"%s\"" code-file) ""))))
 
-     ;; fall back to Emacs bundled etags
      (t
-      ;; (setq ctags-program (cond
-      ;;                 ((eq system-type 'windows-nt)
-      ;;                  (setq ctags-program (concat (counsel-etags-emacs-bin-path) "etags.exe")))
-      ;;                 (t
-      ;;                  (setq ctags-program "etags"))))
-      ;; (setq cmd (format "%s ." ctags-program))
       (message "You need install Ctags at first.  Universal Ctags is highly recommended.")))
     (when counsel-etags-debug
       (message "counsel-etags-get-scan-command called => ctags-program=%s cmd=%s"
@@ -700,7 +693,7 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
 (defun counsel-etags-scan-dir-internal (src-dir)
   "Create tags file from SRC-DIR."
   ;; TODO save the ctags-opts into hash
-  (let* ((ctags-program (or counsel-etags-tags-program
+  (let* ((ctags-program (or counsel-etags-ctags-program
                             (counsel-etags-valid-ctags
                              (counsel-etags-guess-program "ctags"))))
          (default-directory src-dir)
@@ -1309,7 +1302,7 @@ CONTEXT is extra information collected before finding tag definition."
 ;;;###autoload
 (defun counsel-etags-imenu-default-create-index-function ()
   "Create an index alist for the definitions in the current buffer."
-  (let* ((ctags-program (or counsel-etags-tags-program
+  (let* ((ctags-program (or counsel-etags-ctags-program
                             (counsel-etags-guess-program "ctags")))
          (ext (if buffer-file-name (file-name-extension buffer-file-name) ""))
          ;; ctags needs file extension

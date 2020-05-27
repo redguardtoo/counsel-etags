@@ -77,6 +77,8 @@ You can set =counsel-etags-imenu-excluded-types to exclude imenu items by type.
 The variable =counsel-etags-ignore-config-file= specifies the paths of ignore configuration files (".gitignore", ".hgignore", etc).
 
 The path is either absolute or relative to the tags file.
+
+Set =counsel-etags-ignore-config-files= to nil to turn off this feature.
 ** Set up with [[https://github.com/jwiegley/use-package][use-package]]
 Please place =add-hook= code inside =:init= section,
 #+begin_src elisp
@@ -173,7 +175,14 @@ Run =counsel-etags-update-tags-force=. Tags file in project root should exist be
 ** Open recent tag
 =M-x counsel-etags-recent-tag=
 ** Ctags setup
-Google "filetype:ctags site:github.com". Here is [[https://gist.github.com/redguardtoo/b12ddae3b8010a276e9b][mine]].
+Google "filetype:ctags site:github.com". Here is [[https://gist.github.com/redguardtoo/b12ddae3b8010a276e9b][my configuration for Exuberant Ctags]].
+
+Please note there is *some trivial difference between Exuberant Ctags configuration and Universal Ctags*.
+
+If you are using Universal Ctags with *my configuration for Exuberant Ctags*, run below CLI in shell and fixed all the warning by modifying the =~/.ctags= first,
+#+begin_src sh
+ctags --options="$HOME/.ctags" -e -R
+#+end_src
 
 You may need configure environment variable "HOME" on Windows because Ctags looks for "%HOME%/.ctags" by default.
 ** Search with exclusion patterns
@@ -219,7 +228,7 @@ Or create a new grep command =my-grep-by-pinyin=,
     (counsel-etags-grep)))
 #+end_src
 ** Windows
-No extra setup is needed if you install Cygwin to its default location on any driver except make sure "Exuberant Ctags" has been installed through Cygwin. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-tags-program=, and =counsel-etags-grep-program=.
+No extra setup is needed if you install Cygwin to its default location on any driver except make sure "Exuberant Ctags" has been installed through Cygwin. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-ctags-program=, and =counsel-etags-grep-program=.
 * Step by step guide
 You need use Linux/Cygwin/MSYS2. It should be similar in macOS but I'm not sure whether the directory =/usr/include= exists.
 
