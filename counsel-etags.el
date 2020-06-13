@@ -107,6 +107,9 @@
 ;;  - `counsel-etags-find-tag-name-function' finds tag name at point.  If it returns nil,
 ;;    `find-tag-default' is used.  `counsel-etags-word-at-point' gets word at point.
 ;;
+;;  - `counsel-etags-fallback-search-function' is used as fallback search function. Set to
+;;    `counsel-etags-async-ripgrep' for a non-blocking alternative. Handy for large codebases.
+;;
 ;;  - User could append the extra content into tags file in `counsel-etags-after-update-tags-hook'.
 ;;    The parameter of hook is full path of the tags file.  `counsel-etags-tags-line' is a tool function
 ;;    to help user
@@ -476,16 +479,19 @@ The function has same parameters as `counsel-etags-scan-dir-internal'."
 
 (defcustom counsel-etags-fallback-search-function
   'counsel-etags-grep
-  "When tag not found in TAGS, use this search fallback function.")
+  "When tag not found in TAGS, use this search fallback function."
+  :group 'counsel-etags
+  :type 'function)
 
 (defcustom counsel-etags-find-tag-grep-action-key "g"
-  "Key binding to switch to grep via `ivy-dispatching-done'.")
+  "Single-key binding to switch to grep via `ivy-dispatching-done'."
+  :group 'counsel-etags
+  :type 'string)
 
 (defcustom counsel-etags-find-tag-grep-action-title "grep"
-  "Key binding title to switch to grep via `ivy-dispatching-done'.")
-
-(defcustom counsel-etags-find-tag-grep-action-prompt "grep: "
-  "Counsel prompt when grep initiated via `ivy-dispatching-done'.")
+  "Key binding title to switch to grep via `ivy-dispatching-done'."
+  :group 'counsel-etags
+  :type 'string)
 
 (defconst counsel-etags-no-project-msg
   "No project found.  You can create tags file using `counsel-etags-scan-code'.
@@ -1199,7 +1205,7 @@ Focus on TAGNAME if it's not nil."
                        `((,counsel-etags-find-tag-grep-action-key
                           (lambda (x)
                             (funcall counsel-etags-fallback-search-function
-                                     ,tagname ,counsel-etags-find-tag-grep-action-prompt))
+                                     ,tagname))
                           ,counsel-etags-find-tag-grep-action-title)))
       (ivy-read (format  "Find Tag (%s): "
                          (counsel-etags--time-cost time))
@@ -1677,7 +1683,7 @@ ROOT is root directory to grep."
                                (format "-g=!%s" e))
                              counsel-etags-ignore-filenames " "))))
 
-    ;; Momentarily override `counsel-git-grep-action'. Use `counsel-etags-open-file-api'
+    ;; Momentarily override `counsel-git-grep-action'. Use `counsel-etags-open-file-api' instead.
     (cl-letf (((symbol-function 'counsel-git-grep-action) `(lambda (item)
                                                              ;; when grepping, we grepping in project root
                                                              (counsel-etags-open-file-api item
