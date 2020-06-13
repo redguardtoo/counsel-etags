@@ -474,6 +474,19 @@ The function has same parameters as `counsel-etags-scan-dir-internal'."
   :group 'counsel-etags
   :type 'sexp)
 
+(defcustom counsel-etags-fallback-search-function
+  'counsel-etags-grep
+  "When tag not found in TAGS, use this search fallback function.")
+
+(defcustom counsel-etags-find-tag-grep-action-key "g"
+  "Key binding to switch to grep via `ivy-dispatching-done'.")
+
+(defcustom counsel-etags-find-tag-grep-action-title "grep"
+  "Key binding title to switch to grep via `ivy-dispatching-done'.")
+
+(defcustom counsel-etags-find-tag-grep-action-prompt "grep: "
+  "Counsel prompt when grep initiated via `ivy-dispatching-done'.")
+
 (defconst counsel-etags-no-project-msg
   "No project found.  You can create tags file using `counsel-etags-scan-code'.
 So we don't need the project root at all.
@@ -1182,6 +1195,12 @@ Focus on TAGNAME if it's not nil."
                                    dir
                                    tagname))
      (t
+      (ivy-add-actions 'counsel-etags-find-tag
+                       `((,counsel-etags-find-tag-grep-action-key
+                          (lambda (x)
+                            (funcall counsel-etags-fallback-search-function
+                                     ,tagname ,counsel-etags-find-tag-grep-action-prompt))
+                          ,counsel-etags-find-tag-grep-action-title)))
       (ivy-read (format  "Find Tag (%s): "
                          (counsel-etags--time-cost time))
                 cands
@@ -1329,8 +1348,8 @@ CONTEXT is extra information collected before finding tag definition."
 
      ((not (setq counsel-etags-find-tag-candidates
                  (counsel-etags-collect-cands tagname fuzzy current-file dir context)))
-      ;; OK let's try grep if no tag found
-      (counsel-etags-grep tagname "No tag found. "))
+      ;; OK let's try fallback search function if no tag found
+      (funcall counsel-etags-fallback-search-function tagname "No tag found. "))
 
      (t
       ;; open the one selected candidate
@@ -1638,6 +1657,33 @@ ROOT is root directory to grep."
                                                       ,default-directory
                                                       ,keyword))
               :caller 'counsel-etags-grep)))
+
+;;;###autoload
+(defun counsel-etags-async-ripgrep (&optional default-keyword prompt root)
+  "A non-blocking alternative to `counsel-etags-grep'."
+  (interactive)
+  (unless (counsel-etags-has-quick-grep)
+    (error "rg command-line utility not found"))
+
+  (let ((keyword (if default-keyword default-keyword ""))
+        (default-directory (file-truename (or root
+                                              (counsel-etags-locate-project))))
+        (options (concat
+                  (mapconcat (lambda (e)
+                               (format "-g=!%s/*" e))
+                             counsel-etags-ignore-directories " ")
+                  " "
+                  (mapconcat (lambda (e)
+                               (format "-g=!%s" e))
+                             counsel-etags-ignore-filenames " "))))
+
+    ;; Momentarily override `counsel-git-grep-action'. Use `counsel-etags-open-file-api'
+    (cl-letf (((symbol-function 'counsel-git-grep-action) `(lambda (item)
+                                                             ;; when grepping, we grepping in project root
+                                                             (counsel-etags-open-file-api item
+                                                                                          ,default-directory
+                                                                                          ,keyword))))
+      (counsel-rg keyword default-directory options prompt))))
 
 ;;;###autoload
 (defun counsel-etags-grep-current-directory (&optional level)
