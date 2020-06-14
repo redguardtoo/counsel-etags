@@ -1069,7 +1069,7 @@ CONTEXT is extra information collected before find tag definition."
       (setq rlt (delq nil (delete-dups rlt))))
     rlt))
 
-(defun counsel-etags-encode(s)
+(defun counsel-etags-regexp-quote(s)
   "Encode S."
   ;; encode "{}[]"
   (setq s (replace-regexp-in-string "\"" "\\\\\"" s))
@@ -1089,9 +1089,9 @@ CONTEXT is extra information collected before find tag definition."
 (defun counsel-etags-selected-str ()
   "Get selected string.  Suppose plain text instead regex in selected text.
 So we need *encode* the string."
-  (if (region-active-p)
-      (counsel-etags-encode (buffer-substring-no-properties (region-beginning)
-                                                            (region-end)))))
+  (when (region-active-p)
+    (counsel-etags-regexp-quote (buffer-substring-no-properties (region-beginning)
+                                                                (region-end)))))
 
 (defun counsel-etags-tagname-at-point ()
   "Get tag name at point."
