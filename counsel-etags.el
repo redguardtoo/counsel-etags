@@ -514,7 +514,8 @@ The file is also used by tags file auto-update process.")
 (defvar counsel-etags-find-tag-map (make-sparse-keymap)
   "Ivy keymap while narrowing down tags.")
 
-(defvar counsel-etags-last-tagname-at-point nil "Last tagname queried at point.")
+(defvar counsel-etags-last-tagname-at-point nil
+  "Last tagname queried at point.")
 
 (defun counsel-etags-win-path (executable-name drive)
   "Guess EXECUTABLE-NAME's full path in Cygwin on DRIVE."
@@ -1112,8 +1113,9 @@ So we need *encode* the string."
 
 (defun counsel-etags-tagname-at-point ()
   "Get tag name at point."
-  (setq counsel-etags-last-tagname-at-point (or (counsel-etags-selected-str)
-                                            (funcall counsel-etags-find-tag-name-function))))
+  (setq counsel-etags-last-tagname-at-point
+        (or (counsel-etags-selected-str)
+            (funcall counsel-etags-find-tag-name-function))))
 
 (defun counsel-etags-forward-line (lnum)
   "Forward LNUM lines."
