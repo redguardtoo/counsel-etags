@@ -52,7 +52,7 @@ Run =M-x counsel-etags-find-tag-at-point= to navigate in code files without any 
 This command will:
 - Find project root folder and scan code *automatically*
 - Find correct tag *automatically*
-- If no tag is find, it runs =ripgrep= or =grep= *automatically*
+- If no tag is find, it runs =ripgrep= or =grep= *automatically* by calling =counsel-etags-fallback-grep-function=
 
 That's it.
 
