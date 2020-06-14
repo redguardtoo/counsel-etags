@@ -511,6 +511,11 @@ The file is also used by tags file auto-update process.")
 
 (defvar counsel-etags-cache nil "Cache of multiple tags files.")
 
+(defvar counsel-etags-find-tag-map (make-sparse-keymap)
+  "Ivy keymap while narrowing down tags.")
+
+(defvar counsel-etags-last-tagname-at-point nil "Last tagname queried at point.")
+
 (defun counsel-etags-win-path (executable-name drive)
   "Guess EXECUTABLE-NAME's full path in Cygwin on DRIVE."
   (let* ((path (concat drive ":\\\\cygwin64\\\\bin\\\\" executable-name ".exe")))
@@ -1107,8 +1112,8 @@ So we need *encode* the string."
 
 (defun counsel-etags-tagname-at-point ()
   "Get tag name at point."
-  (or (counsel-etags-selected-str)
-      (funcall counsel-etags-find-tag-name-function)))
+  (setq counsel-etags-last-tagname-at-point (or (counsel-etags-selected-str)
+                                            (funcall counsel-etags-find-tag-name-function))))
 
 (defun counsel-etags-forward-line (lnum)
   "Forward LNUM lines."
@@ -1202,7 +1207,8 @@ Focus on TAGNAME if it's not nil."
                            (counsel-etags-open-file-api e
                                                         ,dir
                                                         ,tagname))
-                :caller 'counsel-etags-find-tag)))))
+                :caller 'counsel-etags-find-tag
+                :keymap counsel-etags-find-tag-map)))))
 
 (defun counsel-etags-tags-file-must-exist ()
   "Make sure tags file does exist."
@@ -1337,7 +1343,8 @@ CONTEXT is extra information collected before finding tag definition."
                 :dynamic-collection t
                 :action `(lambda (e)
                            (counsel-etags-open-file-api e ,dir))
-                :caller 'counsel-etags-find-tag))
+                :caller 'counsel-etags-find-tag
+                :keymap counsel-etags-find-tag-map))
 
      ((not (setq counsel-etags-find-tag-candidates
                  (counsel-etags-collect-cands tagname fuzzy current-file dir context)))
