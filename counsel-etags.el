@@ -1124,6 +1124,7 @@ So we need *encode* the string."
     (goto-char (point-min))
     (forward-line (1- lnum))))
 
+;;;###autoload
 (defun counsel-etags-push-marker-stack ()
   "Save current position."
   ;; un-select region
