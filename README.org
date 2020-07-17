@@ -199,6 +199,8 @@ If [[https://github.com/BurntSushi/ripgrep][ripgrep]] is installed, it's used as
 
 Use =M-x counsel-etags-grep= to grep in project root.
 
+Set =counsel-etags-grep-extra-arguments= to add extra arguments for grep.
+
 Use =M-x counsel-etags-grep-current-directory= to grep current directory.
 
 Use =C-u num M-x counsel-etags-grep-current-directory= to grep NUM level up of current directory. If NUM is nil or 0, current directory is grepped
