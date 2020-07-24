@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((counsel "0.13.0"))
 ;; Keywords: tools, convenience
-;; Version: 1.9.12
+;; Version: 1.9.13
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -560,7 +560,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "1.9.12"))
+  (message "1.9.13"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -1109,6 +1109,7 @@ CONTEXT is extra information collected before find tag definition."
   (setq s (replace-regexp-in-string "\\." "\\\\\." s))
   (setq s (replace-regexp-in-string "\\[" "\\\\\[" s))
   (setq s (replace-regexp-in-string "\\]" "\\\\\]" s))
+  (setq s (replace-regexp-in-string "-" "\\\\-" s))
   ;; perl-regex support non-ASCII characters
   ;; Turn on `-P` from `git grep' and `grep'
   ;; the_silver_searcher and ripgrep need no setup
