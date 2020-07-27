@@ -1647,7 +1647,7 @@ If HINT is not nil, it's used as grep hint.
 ROOT is root directory to grep."
   (interactive)
   (let* ((text (if default-keyword default-keyword
-                  (counsel-etags-read-keyword "Grep pattern: ")))
+                  (counsel-etags-read-keyword "Regular expression for grep: ")))
          (keyword (funcall counsel-etags-convert-grep-keyword text))
          (default-directory (file-truename (or root
                                                (counsel-etags-locate-project))))
