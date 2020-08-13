@@ -133,6 +133,7 @@
 (require 'cl-lib)
 (require 'find-file)
 (require 'counsel nil t) ; counsel => swiper => ivy
+(require 'tramp nil t)
 
 (defgroup counsel-etags nil
   "Complete solution to use ctags."
@@ -616,7 +617,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-async-shell-command (command tags-file)
   "Execute string COMMAND and create TAGS-FILE asynchronously."
-  (let* ((proc (start-process "Shell" nil shell-file-name shell-command-switch command)))
+  (let* ((proc (start-file-process "Shell" nil shell-file-name shell-command-switch command)))
     (set-process-sentinel
      proc
      `(lambda (process signal)
@@ -626,6 +627,11 @@ Return nil if it's not found."
              ((string= (substring signal 0 -1) "finished")
               (let* ((cmd (car (cdr (cdr (process-command process))))))
                 (if counsel-etags-debug (message "`%s` executed." cmd))
+                ;; If tramp exists and file is remote, clear file cache
+                (when (and (fboundp 'tramp-cleanup-this-connection)
+                           ,tags-file
+                           (file-remote-p ,tags-file))
+                  (tramp-cleanup-this-connection))
                 ;; reload tags-file
                 (when (and ,tags-file (file-exists-p ,tags-file))
                   (run-hook-with-args 'counsel-etags-after-update-tags-hook ,tags-file)
@@ -736,7 +742,7 @@ If it's Emacs etags return nil."
   (let* (rlt configs filename)
     (dolist (f counsel-etags-ignore-config-files)
       (when (file-exists-p (setq filename (file-truename f)))
-        (push filename configs)))
+        (push (file-local-name filename) configs)))
     (setq rlt (mapconcat (lambda (c) (format "--exclude=\"@%s\"" c)) configs " "))
     (when counsel-etags-debug
         (message "counsel-etags-ctags-ignore-config returns %s" rlt))
@@ -1340,7 +1346,8 @@ Tags might be sorted by comparing tag's path with CURRENT-FILE."
   "Find TAGNAME using FUZZY algorithm from CURRENT-FILE.
 CONTEXT is extra information collected before finding tag definition."
   (let* ((time (current-time))
-         (dir (counsel-etags-tags-file-directory)))
+         (dir (file-local-name (counsel-etags-tags-file-directory)))
+         (current-file (file-local-name current-file)))
     (when counsel-etags-debug
       (message "counsel-etags-find-tag-api called => tagname=%s fuzzy=%s dir%s current-file=%s context=%s"
                tagname
