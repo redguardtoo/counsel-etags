@@ -205,6 +205,9 @@ Use =M-x counsel-etags-grep-current-directory= to grep current directory.
 
 Use =C-u num M-x counsel-etags-grep-current-directory= to grep NUM level up of current directory. If NUM is nil or 0, current directory is grepped
 
+Grep result is sorted by string distance of current file path and candidate file path. The sorting happens in Emacs 27+.
+
+You can set =counsel-etags-sort-grep-result-p= to =nil= to disable sorting.
 ** Customize grep keyword
 Users could set =counsel-etags-convert-grep-keyword= to customize grep keyword.
 
