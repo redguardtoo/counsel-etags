@@ -250,7 +250,7 @@ Run below script in Bash shell to create a toy project.
 #!/bin/bash
 mkdir -p ~/proj1 && cd ~/proj1
 cat > .dir-locals.el <<EOF
-((nil . ((counsel-etags-project-root . "~/proj1/")
+((nil . ((counsel-etags-project-root . "$PWD")
          (counsel-etags-extra-tags-files . ("./include/TAGS")))))
 EOF
 cat > hello.c <<EOF
