@@ -1228,8 +1228,9 @@ Focus on TAGNAME if it's not nil."
             time-passed
             (if (<= time-passed 2) "" "s"))))
 
-(defun counsel-etags-open-tag-cand (tagname cands time)
-  "Find TAGNAME from CANDS.  Open tags file at TIME."
+(defun counsel-etags-open-tag-cand (tagname cands time &optional show-tagname-p)
+  "Find TAGNAME from CANDS.  Open tags file at TIME.
+If SHOW-TAGNAME-P is t, show the tag name in minibuffer."
   ;; mark current point for `pop-tag-mark'
   (let* ((dir (counsel-etags-tags-file-directory)))
     (cond
@@ -1248,6 +1249,7 @@ Focus on TAGNAME if it's not nil."
                            (counsel-etags-open-file-api e
                                                         ,dir
                                                         ,tagname))
+                :initial-input (if show-tagname-p tagname)
                 :caller 'counsel-etags-find-tag
                 :keymap counsel-etags-find-tag-map)))))
 
@@ -1361,9 +1363,10 @@ Tags might be sorted by comparing tag's path with CURRENT-FILE."
       (setq counsel-etags-find-tag-candidates rlt)
       rlt))))
 
-(defun counsel-etags-find-tag-api (tagname fuzzy current-file &optional context)
+(defun counsel-etags-find-tag-api (tagname fuzzy current-file &optional context show-tagname-p)
   "Find TAGNAME using FUZZY algorithm from CURRENT-FILE.
-CONTEXT is extra information collected before finding tag definition."
+CONTEXT is extra information collected before finding tag definition.
+If SHOW-TAGNAME-P is t, show the tag name in the minibuffer."
   (let* ((time (current-time))
          (dir (file-local-name (counsel-etags-tags-file-directory)))
          (current-file (file-local-name current-file)))
@@ -1398,7 +1401,7 @@ CONTEXT is extra information collected before finding tag definition."
 
      (t
       ;; open the one selected candidate
-      (counsel-etags-open-tag-cand tagname counsel-etags-find-tag-candidates time)))))
+      (counsel-etags-open-tag-cand tagname counsel-etags-find-tag-candidates time show-tagname-p)))))
 
 (defun counsel-etags-imenu-scan-string (output)
   "Extract imenu items from OUTPUT."
