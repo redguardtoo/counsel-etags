@@ -1368,8 +1368,9 @@ Tags might be sorted by comparing tag's path with CURRENT-FILE."
 CONTEXT is extra information collected before finding tag definition.
 If SHOW-TAGNAME-P is t, show the tag name in the minibuffer."
   (let* ((time (current-time))
-         (dir (file-local-name (counsel-etags-tags-file-directory)))
+         (dir (counsel-etags-tags-file-directory))
          (current-file (file-local-name current-file)))
+    (if dir (setq dir (file-local-name dir)))
     (when counsel-etags-debug
       (message "counsel-etags-find-tag-api called => tagname=%s fuzzy=%s dir%s current-file=%s context=%s"
                tagname
@@ -1379,6 +1380,8 @@ If SHOW-TAGNAME-P is t, show the tag name in the minibuffer."
                context))
     ;; Dir could be nil. User could use `counsel-etags-extra-tags-files' instead
     (cond
+     ((not dir)
+      (message "Tags file is not ready yet."))
      ((not tagname)
       ;; OK, need use ivy-read to find candidate
       (ivy-read "Fuzz matching tags:"
