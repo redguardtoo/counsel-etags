@@ -1668,13 +1668,14 @@ Extended regex is used, like (pattern1|pattern2)."
   (file-name-as-directory (file-name-base (directory-file-name directory))))
 
 ;;;###autoload
-(defun counsel-etags-grep (&optional default-keyword hint root)
+(defun counsel-etags-grep (&optional default-keyword hint root show-keyword-p)
   "Grep at project root directory or current directory.
 Try to find best grep program (ripgrep, grep...) automatically.
 Extended regex like (pattern1|pattern2) is used.
 If DEFAULT-KEYWORD is not nil, it's used as grep keyword.
 If HINT is not nil, it's used as grep hint.
-ROOT is root directory to grep."
+ROOT is root directory to grep.
+If SHOW-KEYWORD-P is t, show the keyword in the minibuffer."
   (interactive)
   (let* ((text (if default-keyword default-keyword
                   (counsel-etags-read-keyword "Regular expression for grep: ")))
@@ -1724,6 +1725,7 @@ ROOT is root directory to grep."
                          (counsel-etags-open-file-api item
                                                       ,default-directory
                                                       ,keyword))
+              :initial-input (if show-keyword-p keyword)
               :caller 'counsel-etags-grep)))
 
 ;;;###autoload
