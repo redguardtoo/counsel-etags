@@ -423,7 +423,7 @@ related functions need create and scan files in this folder."
 
 (defcustom counsel-etags-ctags-options-base "~/.ctags.exuberant"
   "Ctags configuration base use by all Ctags implementations.
-If Universal Ctags is used, it's converted to `counsel-etags-ctags-options-file'.
+Universal Ctags converts it to `counsel-etags-ctags-options-file'.
 If it's nil, nothing happens."
   :group 'counsel-etags
   :type 'string)
