@@ -448,7 +448,8 @@ If it's nil, nothing happens."
   :type '(repeat 'string))
 
 (defcustom counsel-etags-imenu-excluded-types
-  '("variable")
+  '("variable"
+    "constant")
   "Some imenu items should be excluded by type.
 Run 'ctags -x some-file' to see the type in second column of output."
   :group 'counsel-etags
@@ -788,7 +789,7 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
                     ;; print a tabular, human-readable cross reference
                     ;; --<my-lang>-kinds=f still accept all user defined regex
                     ;; so we have to filter in Emacs Lisp
-                    (if code-file "-x" "")
+                    (if code-file "-x -w" "")
                     (if code-file (format "\"%s\"" code-file) ""))))
 
      (t
@@ -1419,14 +1420,18 @@ If SHOW-TAGNAME-P is t, show the tag name in the minibuffer."
   (let* (cands
          (lines (split-string output "\n")))
     (dolist (l lines)
-      (let* ((items (split-string l " +")))
+      (let* ((items (split-string l " +"))
+             (tag-name (nth 0 items))
+             (tag-type (nth 1 items))
+             (tag-line-num (nth 2 items)))
         (when (and (>= (length items) 4)
                    ;; tag name is not excluded
-                   (not (member (nth 0 items) counsel-etags-imenu-excluded-names))
+                   (not (member tag-name counsel-etags-imenu-excluded-names))
 
                    ;; tags type is not excluded
-                   (not (member (nth 1 items) counsel-etags-imenu-excluded-types)))
-          (push (cons (nth 0 items) (nth 2 items)) cands))))
+                   (not (member tag-type counsel-etags-imenu-excluded-types))
+                   (string-match "[0-9]+" tag-line-num))
+          (push (cons tag-name tag-line-num) cands))))
     cands))
 
 
