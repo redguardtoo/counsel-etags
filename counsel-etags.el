@@ -55,7 +55,8 @@
 ;;   `counsel-etags-update-tags-force' to update current tags file by force
 ;;   `counsel-etags-ignore-config-file' specifies paths of ignore configuration files
 ;;   (".gitignore", ".hgignore", etc).  Path is either absolute or relative to the tags file.
-;;
+;;   `counsel-etags-universal-ctags-p' to detect if Universal Ctags is used.
+;;   `counsel-etags-exuberant-ctags-p' to detect if Exuberant Ctags is used.
 ;;
 ;; Tips:
 ;;
@@ -668,11 +669,18 @@ Return nil if it's not found."
   "Get CTAGS-PROGRAM information."
   (shell-command-to-string (concat ctags-program " --version")))
 
-(defun counsel-etags-is-exuberant-ctags (ctags-program)
+;;;###autoload
+(defun counsel-etags-exuberant-ctags-p (ctags-program)
   "If CTAGS-PROGRAM is Exuberant Ctags."
   (let* ((cmd-output (counsel-etags--ctags--info ctags-program)))
     (and (not (string-match-p "Universal Ctags" cmd-output))
          (string-match-p "Exuberant Ctags" cmd-output))))
+
+;;;###autoload
+(defun counsel-etags-universal-ctags-p (ctags-program)
+  "If CTAGS-PROGRAM is Universal Ctags."
+  (and (executable-find ctags-program)
+       (not (counsel-etags-exuberant-ctags-p ctags-program))))
 
 (defun counsel-etags-valid-ctags (ctags-program)
   "If CTAGS-PROGRAM is Ctags return the program.
@@ -711,7 +719,7 @@ If it's Emacs etags return nil."
 (defun counsel-etags-ctags-options-file-cli (program)
   "Use PROGRAM to create cli for `counsel-etags-ctags-options-file'."
   (let* (str
-         (exuberant-ctags-p (counsel-etags-is-exuberant-ctags program)))
+         (exuberant-ctags-p (counsel-etags-exuberant-ctags-p program)))
     (cond
      ;; Don't use any configuration file at all
      ((or (not counsel-etags-ctags-options-file)
