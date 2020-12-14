@@ -100,7 +100,7 @@ Please place =add-hook= code inside =:init= section,
 
 User could append the extra content into tags file in =counsel-etags-after-update-tags-hook=.
 
-The parameter of hook is full path of the tags file. =counsel-etags-tags-line= is a tool function to help user.
+The parameter of hook is full path of the tags file. =counsel-etags-tag-line= is a tool function to help user.
 ** Configuration file
 Path of the Configuration file is defined in =counsel-etags-ctags-options-file=. Its default value is =~/.ctags=.
 
