@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "25.1") (counsel "0.13.0"))
 ;; Keywords: tools, convenience
-;; Version: 1.9.15
+;; Version: 1.9.16
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -111,8 +111,9 @@
 ;;    `find-tag-default' is used.  `counsel-etags-word-at-point' gets word at point.
 ;;
 ;;  - User could append the extra content into tags file in `counsel-etags-after-update-tags-hook'.
-;;    The parameter of hook is full path of the tags file.  `counsel-etags-tag-line' is a tool
-;;    function to help user
+;;    The parameter of hook is full path of the tags file.
+;;    `counsel-etags-tag-line' and `counsel-etags-append-to-tags-file' are helper functions to
+;;    update tags file in the hook.
 ;;
 ;;  - The ignore files (.gitignore, etc) are automatically detected and append to ctags
 ;;    cli options as "--exclude="@/ignore/file/path".
@@ -139,10 +140,16 @@
 (require 'find-file)
 (require 'counsel nil t) ; counsel => swiper => ivy
 (require 'tramp nil t)
+(require 'browse-url)
 
 (defgroup counsel-etags nil
   "Complete solution to use ctags."
   :group 'tools)
+
+(defcustom counsel-etags-browse-url-function 'browse-url-generic
+  "The function to open url in tags file."
+  :group 'counsel-etags
+  :type 'function)
 
 (defcustom counsel-etags-ignore-config-files
   '(".gitignore"
@@ -529,7 +536,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "1.9.15"))
+  (message "1.9.16"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -1154,22 +1161,29 @@ Focus on TAGNAME if it's not nil."
 
     ;; item's format is like '~/proj1/ab.el:39: (defun hello() )'
     (counsel-etags-push-marker-stack)
-    ;; open file, go to certain line
-    (find-file file)
-    (counsel-etags-forward-line linenum))
 
-  ;; move focus to the tagname
-  (beginning-of-line)
-  ;; search tagname in current line might fail
-  ;; maybe tags files is updated yet
-  (when (and tagname
-             ;; focus on the tag if possible
-             (re-search-forward tagname (line-end-position) t))
-    (goto-char (match-beginning 0)))
+    (cond
+     ;; file is actually a url template
+     ((string-match "^https?://" file)
+      (funcall counsel-etags-browse-url-function (format file tagname)))
 
-  ;; flash, Emacs v25 only API
-  (when (fboundp 'xref-pulse-momentarily)
-    (xref-pulse-momentarily)))
+     (t
+      ;; open file, go to certain line
+      (find-file file)
+      (counsel-etags-forward-line linenum)
+
+      ;; move focus to the tagname
+      (beginning-of-line)
+      ;; search tagname in current line might fail
+      ;; maybe tags files is updated yet
+      (when (and tagname
+                 ;; focus on the tag if possible
+                 (re-search-forward tagname (line-end-position) t))
+        (goto-char (match-beginning 0)))
+
+      ;; flash, Emacs v25 only API
+      (xref-pulse-momentarily)))))
+
 
 (defun counsel-etags-remember (cand dir)
   "Remember CAND whose `default-directory' is DIR."
@@ -1710,13 +1724,34 @@ If FORCED-TAGS-FILE is nil, the updating process might now happen."
         (message "%s is updated!" tags-file)))))
 
 ;;;###autoload
-(defun counsel-etags-tag-line (code tag-name line-number &optional byte-offset)
-  "One line in tag file using CODE, TAG-NAME, LINE-NUMBER, and BYTE-OFFSET."
+(defun counsel-etags-tag-line (code-snippet tag-name line-number &optional byte-offset)
+  "One line in tag file using CODE-SNIPPET, TAG-NAME, LINE-NUMBER, and BYTE-OFFSET."
   (format "%s\177%s\001%s,%s\n"
-          code
+          code-snippet
           tag-name
           line-number
           (or byte-offset 0)))
+
+;;;###autoload
+(defun counsel-etags-append-to-tags-file (sections tags-file)
+  "Append SECTIONS into TAGS-FILE.
+Each section is a pair of file and tags content in that file.
+File can be url template like \"https://developer.mozilla.org/en-US/docs/Web/API/%s\".
+The `counsel-etags-browse-url-function' is used to open the url."
+  (when (and tags-file
+             (file-exists-p tags-file)
+             (file-readable-p tags-file)
+             (file-writable-p tags-file)
+             sections
+             (> (length sections) 0))
+
+    (with-temp-buffer
+      (insert-file-contents tags-file)
+      (goto-char (point-max))
+      (dolist (s sections)
+        (when (and (car s) (cdr s))
+          (insert (format "\n\014\n%s,%d\n%s" (car s) 0 (cdr s)))))
+      (write-region (point-min) (point-max) tags-file nil :silent))))
 
 ;; {{ occur setup
 (defun counsel-etags-tag-occur-api (items)
