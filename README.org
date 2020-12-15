@@ -32,46 +32,36 @@ It's been tested on Linux/Windows/macOS.
   - [[#customize-grep-keyword][Customize grep keyword]]
   - [[#windows][Windows]]
   - [[#ctagsexuberant][~/.ctags.exuberant]]
+  - [[#use-ctags-to-generate-imenu-items][Use Ctags to generate Imenu items]]
 - [[#step-by-step-guide][Step by step guide]]
   - [[#step-1-a-toy-c-project][Step 1, a toy C project]]
   - [[#step-2-navigate-code][Step 2, navigate code]]
 - [[#bug-report][Bug Report]]
 
 * Install
-You can install =counsel-etags= from [[https://melpa.org/#/counsel-etags][MELPA]] with =package.el= (=M-x package-install counsel-etags=).
+Please install =counsel-etags= from [[https://melpa.org/#/counsel-etags][MELPA]].
 
-If [[http://ctags.sourceforge.net/][Exuberant Ctags]] or [[https://ctags.io/][Universal Ctags]] exists, this program works out of box. Universal Ctags is actively maintained right now.
+If [[http://ctags.sourceforge.net/][Exuberant Ctags]] or [[https://ctags.io/][Universal Ctags]] exists, this program works out of box.
 
-Or else, customize =counsel-etags-update-tags-backend= to create tags file with your own CLI. Please note [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Create-Tags-Table.html#Create-Tags-Table][etags]] bundled with Emacs is not supported any more.
+Universal Ctags is actively maintained and strongly recommended.
+
+Or else, customize =counsel-etags-update-tags-backend= to create tags file with your own CLI. Please note [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Create-Tags-Table.html#Create-Tags-Table][etags]] bundled with Emacs is not supported anymore.
 
 [[https://github.com/redguardtoo/emacs.d/issues/697#issuecomment-394141015][It's reported]] "Exuberant Ctags" v5.8.5 is buggy.
 
 * Usage
-Run =M-x counsel-etags-find-tag-at-point= to navigate in code files without any setup.
+Run =M-x counsel-etags-find-tag-at-point= to navigate code without any setup.
 
 This command will:
 - Find project root folder and scan code *automatically*
 - Find correct tag *automatically*
-- If no tag is find, it runs =ripgrep= or =grep= *automatically* by calling =counsel-etags-fallback-grep-function=
+- If no tag is find, =ripgrep= or =grep= is *automatically* called
 
-That's it.
+Please note it takes time to parse tags file contains long lines. It's the known issue of Emacs Lisp.
 
-Please note it takes time to parse tags file which contains long lines. It's the known issue of Emacs Lisp. The program itself is fine.
-
-If you prefer manually setup tags file, you only need run =M-x counsel-etags-scan-code= once or create tags file [[https://www.emacswiki.org/emacs/BuildTags][in your own way]].
+You could run =M-x counsel-etags-scan-code= only once and create tags file [[https://www.emacswiki.org/emacs/BuildTags][in your own way]].
 
 Please read [[#step-by-step-guide][Step by step guide]] for more details.
-
-Run =M-x counsel-etags-list-tag-in-current-file= to list tags in current file.
-
-Or just use native imenu command with below setup,
-#+begin_src elisp
-(setq imenu-create-index-function 'counsel-etags-imenu-default-create-index-function)
-#+end_src
-
-You can set =counsel-etags-imenu-excluded-names= to exclude imenu items by name.
-
-You can set =counsel-etags-imenu-excluded-types to exclude imenu items by type.
 
 * Tips (OPTIONAL)
 ** ".gitignore" and ".hgignore" are respected
@@ -96,15 +86,31 @@ Please place =add-hook= code inside =:init= section,
   (push "build" counsel-etags-ignore-directories))
 #+end_src
 ** Insert extra content into tags file after it's updated
-=counsel-etags-find-tag-name-function= finds tag name at point. If it returns nil, =find-tag-default= is used. =counsel-etags-word-at-point= gets word at point.
+=counsel-etags-find-tag-name-function= finds tag name at point. If it returns nil, =find-tag-default= is used. =counsel-etags-word-at-point= returns the word at point.
 
 User could append the extra content into tags file in =counsel-etags-after-update-tags-hook=.
 
-The parameter of hook is full path of the tags file.
+The parameter of hook function is full path of the tags file.
 
-=counsel-etags-tag-line= and =counsel-etags-append-to-tags-file= are helper functions to update tags file in the hook.
+=counsel-etags-tag-line= and =counsel-etags-append-to-tags-file= are helper functions to update tags file in the hook,
+
+Sample code to append native javascript API "addEventListener", "dispatchEvent", "removeEventListener" into tags file,
+#+begin_src elisp
+(defun my-update-tags-file (tags-file)
+  "Update TAGS-FILE."
+  (when (memq major-mode '(js-mode typescript-mode js2-mode))
+    (let ((s3 (mapconcat (lambda (tagname)
+                           (counsel-etags-tag-line tagname tagname 0))
+                         '(addEventListener
+                           dispatchEvent
+                           removeEventListener) "")))
+      (counsel-etags-append-to-tags-file
+       (list (cons "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/%s" s3))
+       tags-file))))
+(add-hook 'counsel-etags-after-update-tags-hook 'my-update-tags-file)
+#+end_src
 ** Configuration file
-Path of the Configuration file is defined in =counsel-etags-ctags-options-file=. Its default value is =~/.ctags=.
+Path of the configuration file is defined in =counsel-etags-ctags-options-file= whose value is =~/.ctags=.
 
 Exuberant Ctags actually can NOT open configuration file ".ctags" through cli option.
 
@@ -125,24 +131,19 @@ You can set up =counsel-etags-ignore-directories= and =counsel-etags-ignore-file
   (push "*.json" counsel-etags-ignore-filenames))
 #+end_src
 ** Dependency on Emacs APIs is minimum
-Any tag related API or variable is not used.
+I intend to keep this package completely independent.
 
-Neither =tags-file-name= nor =tags-table-list= is used.
+Many native tag API or variable (=tags-file-name=, =tags-table-list=, =visit-tags-table=, =xref-find-references=, etc) are not used.
 
-Any commands (=visit-tags-table=, =xref-find-references=, ...) mentioned by other online tutorials are not used.
-
-I intend to keep this package is completely independent.
 ** Specify multiple tags files
 =counsel-etags-extra-tags-files= contains extra tags file to parse.
 
-Set it like =(setq counsel-etags-extra-tags-files '("/usr/include/TAGS" "/usr/local/include/TAGS"))=
-
-Files in =counsel-etags-extra-tags-files= should contain only tag with absolute path.
-
-Here is a shell CLI to create tags file:
-#+begin_src bash
-ctags -e -R
+Sample setup,
+#+begin_src elisp
+(setq counsel-etags-extra-tags-files '("/usr/include/TAGS" "/usr/local/include/TAGS"))
 #+end_src
+
+Files in =counsel-etags-extra-tags-files= should contain only tag names with absolute path.
 ** Auto update tags file
 #+begin_src elisp
 ;; Don't ask before rereading the TAGS files if they have changed
@@ -189,13 +190,13 @@ ctags --options="$HOME/.ctags" -e -R
 
 You may need configure environment variable "HOME" on Windows because Ctags looks for "%HOME%/.ctags" by default.
 ** Search with exclusion patterns
-All counsel-etags commands supports exclusion patterns from [[https://github.com/abo-abo/swiper][ivy]].
+All commands support exclusion patterns from [[https://github.com/abo-abo/swiper][ivy]].
 
-You can filter the candidates with =keyword1 !keyword2 keyword3=. So we display only candidate containing =keyword1= but neither =keyword2= nor =keyword3=.
+You can filter the candidates with =keyword1 !keyword2 keyword3=. So only candidate containing =keyword1= but neither =keyword2= nor =keyword3= are displayed.
 
-You can also press =C-c C-o= to create a buffer containing all candidates.
+You can press =C-c C-o= or =M-x ivy-occur= to export candidates to a buffer.
 
-In summary, all functionality from powerful [[https://github.com/abo-abo/swiper][ivy]] are supported perfectly.
+In summary, all functionalities from [[https://github.com/abo-abo/swiper][ivy]] are supported.
 ** Grep program
 If [[https://github.com/BurntSushi/ripgrep][ripgrep]] is installed, it's used as faster grep program. Or else we fallback to =grep=.
 
@@ -205,9 +206,9 @@ Set =counsel-etags-grep-extra-arguments= to add extra arguments for grep.
 
 Use =M-x counsel-etags-grep-current-directory= to grep current directory.
 
-Use =C-u num M-x counsel-etags-grep-current-directory= to grep NUM level up of current directory. If NUM is nil or 0, current directory is grepped
+Use =C-u num M-x counsel-etags-grep-current-directory= to grep NUM level up of current directory. If NUM is nil or 0, current directory is searched.
 
-Grep result is sorted by string distance of current file path and candidate file path. The sorting happens in Emacs 27+.
+Grep result is sorted by string distance of current file path and candidate file path. The sorting is enabled in Emacs 27+.
 
 You can set =counsel-etags-sort-grep-result-p= to =nil= to disable sorting.
 ** Customize grep keyword
@@ -236,13 +237,27 @@ Or create a new grep command =my-grep-by-pinyin=,
     (counsel-etags-grep)))
 #+end_src
 ** Windows
-No extra setup is needed if you install Cygwin to its default location on any driver except make sure "Exuberant Ctags" has been installed through Cygwin. Or else, you could setup =counsel-etags-find-program=, =counsel-etags-ctags-program=, and =counsel-etags-grep-program=.
+Installing Cygwin and its package Ctags on any driver is all you need to do. No extra setup is required.
+
+But you could still set up =counsel-etags-find-program=, =counsel-etags-ctags-program=, and =counsel-etags-grep-program= to specify the command line program path.
 ** ~/.ctags.exuberant
 If base configuration file "~/.ctags.exuberant" exists, it's used to generate "~/.ctags" automatically.
 
 "~/.ctags.exuberant" is in Exuberant Ctags format, but the "~/.ctags" could be in Universal Ctags format if Universal Ctags is used.
 
 You can customize =counsel-etags-ctags-options-base= to change the path of base configuration file.
+** Use Ctags to generate Imenu items
+Run =M-x counsel-etags-list-tag-in-current-file= to list tags in current file.
+
+You can also use native imenu command with below setup,
+#+begin_src elisp
+(setq imenu-create-index-function 'counsel-etags-imenu-default-create-index-function)
+#+end_src
+
+Set =counsel-etags-imenu-excluded-names= to exclude imenu items by name.
+
+Set =counsel-etags-imenu-excluded-types to exclude imenu items by type.
+
 * Step by step guide
 You need use Linux/Cygwin/MSYS2. It should be similar in macOS but I'm not sure whether the directory =/usr/include= exists.
 
@@ -273,4 +288,4 @@ mkdir -p include && cd include && find /usr/include | ctags -e -L -
 ** Step 2, navigate code
 Open =hello.c= in Emacs (say "YES" if Emacs ask any question), move focus over symbol "fn" or "printf", run =counsel-etags-find-tag-at-point=.
 * Bug Report
-Check [[https://github.com/redguardtoo/counsel-etags]].
+Report bugs to [[https://github.com/redguardtoo/counsel-etags]].
