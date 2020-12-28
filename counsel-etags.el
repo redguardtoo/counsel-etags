@@ -51,8 +51,14 @@
 ;;   (".gitignore", ".hgignore", etc).  Path is either absolute or relative to the tags file.
 ;;   `counsel-etags-universal-ctags-p' to detect if Universal Ctags is used.
 ;;   `counsel-etags-exuberant-ctags-p' to detect if Exuberant Ctags is used.
+;;   See documentation of `counsel-etags-use-ripgrep-force' on using ripgrep.
+;;   If it's not set, correct grep program is autmatically detected.
 ;;
-;; Tips:
+;; Tips,
+;; - The grep program path on Native Windows Emacs uses either forward slash or
+;;   backward slash.  Like "C:/rg.exe" or "C:\\\\rg.exe".
+;;   If grep program path is added to environment variable PATH, you don't need
+;;   worry about slash problem.
 ;;
 ;; - Add below code into "~/.emacs" to AUTOMATICALLY update tags file:
 ;;
@@ -1609,7 +1615,7 @@ Extended regex is used, like (pattern1|pattern2)."
    ((counsel-etags-has-quick-grep-p)
     ;; "--hidden" force ripgrep to search hidden files/directories, that's default
     ;; behavior of grep
-    (format "%s %s %s --hidden %s \"%s\" --"
+    (format "\"%s\" %s %s --hidden %s \"%s\" --"
             ;; if rg is not in $PATH, then it's in `counsel-etags-grep-program'
             (or (executable-find "rg") counsel-etags-grep-program)
             ;; (if counsel-etags-debug " --debug")
@@ -1619,7 +1625,7 @@ Extended regex is used, like (pattern1|pattern2)."
             keyword))
    (t
     ;; use extended regex always
-    (format "%s -rsnE %s %s \"%s\" *"
+    (format "\"%s\" -rsnE %s %s \"%s\" *"
             (or counsel-etags-grep-program (counsel-etags-guess-program "grep"))
             counsel-etags-grep-extra-arguments
             (counsel-etags-exclude-opts use-cache)

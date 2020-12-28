@@ -13,6 +13,7 @@ It's been tested on Linux/Windows/macOS.
 - [[#install][Install]]
 - [[#usage][Usage]]
 - [[#tips-optional][Tips (OPTIONAL)]]
+  - [[#native-windows-emacs][Native Windows Emacs]]
   - [[#gitignore-and-hgignore-are-respected][".gitignore" and ".hgignore" are respected]]
   - [[#set-up-with-use-package][Set up with use-package]]
   - [[#insert-extra-content-into-tags-file-after-its-updated][Insert extra content into tags file after it's updated]]
@@ -64,6 +65,10 @@ You could run =M-x counsel-etags-scan-code= only once and create tags file [[htt
 Please read [[#step-by-step-guide][Step by step guide]] for more details.
 
 * Tips (OPTIONAL)
+** Native Windows Emacs
+The grep program path on Native Windows Emacs uses either forward slash or backward slash. Like "C:/rg.exe" or "C:\\\\rg.exe".
+
+If grep program path is added to environment variable PATH, you don't need worry about slash problem.
 ** ".gitignore" and ".hgignore" are respected
 The variable =counsel-etags-ignore-config-file= specifies the paths of ignore configuration files (".gitignore", ".hgignore", etc).
 
