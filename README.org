@@ -148,7 +148,7 @@ Sample setup,
 (setq counsel-etags-extra-tags-files '("/usr/include/TAGS" "/usr/local/include/TAGS"))
 #+end_src
 
-Files in =counsel-etags-extra-tags-files= should contain only tag names with absolute path.
+Files in =counsel-etags-extra-tags-files= should have symbols with absolute path only.
 ** Auto update tags file
 #+begin_src elisp
 ;; Don't ask before rereading the TAGS files if they have changed

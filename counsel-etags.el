@@ -80,7 +80,7 @@
 ;;     (setq counsel-etags-extra-tags-files
 ;;           '("./TAGS" "/usr/include/TAGS" "$PROJ1/include/TAGS"))
 ;;
-;;   Files in `counsel-etags-extra-tags-files' have only symbol with absolute path.
+;;   Files in `counsel-etags-extra-tags-files' should have symbols with absolute path only.
 ;;
 ;; - You can set up `counsel-etags-ignore-directories' and `counsel-etags-ignore-filenames',
 ;;   (with-eval-after-load 'counsel-etags
