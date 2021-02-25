@@ -1239,6 +1239,8 @@ Focus on TAGNAME if it's not nil."
   (let* ((tags-file (counsel-etags-locate-tags-file))
          src-dir)
     (when (and (not tags-file)
+               ;; No need to hint after user set `counsel-etags-extra-tags-files'
+               (not counsel-etags-extra-tags-files)
                (not counsel-etags-can-skip-project-root))
       (setq src-dir (read-directory-name "Ctags will scan code at:"
                                          (counsel-etags-locate-project)))
@@ -1358,7 +1360,7 @@ Tags might be sorted by comparing tag's path with CURRENT-FILE."
                current-file))
     ;; Dir could be nil. User could use `counsel-etags-extra-tags-files' instead
     (cond
-     ((not dir)
+     ((and (not dir) (not counsel-etags-extra-tags-files))
       (message "Tags file is not ready yet."))
      ((not tagname)
       ;; OK, need use ivy-read to find candidate
@@ -1493,7 +1495,7 @@ That's the known issue of Emacs Lisp.  The program itself is perfectly fine."
   (let* ((tagname (counsel-etags-tagname-at-point)))
     (cond
      (tagname
-        (counsel-etags-find-tag-api tagname nil buffer-file-name))
+      (counsel-etags-find-tag-api tagname nil buffer-file-name))
      (t
       (message "No tag at point")))))
 
