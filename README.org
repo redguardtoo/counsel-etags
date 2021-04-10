@@ -13,6 +13,7 @@ It's been tested on Linux/Windows/macOS.
 - [[#install][Install]]
 - [[#usage][Usage]]
 - [[#tips-optional][Tips (OPTIONAL)]]
+  - [[#jump-back][Jump back]]
   - [[#native-windows-emacs][Native Windows Emacs]]
   - [[#gitignore-and-hgignore-are-respected][".gitignore" and ".hgignore" are respected]]
   - [[#set-up-with-use-package][Set up with use-package]]
@@ -65,6 +66,8 @@ You could run =M-x counsel-etags-scan-code= only once and create tags file [[htt
 Please read [[#step-by-step-guide][Step by step guide]] for more details.
 
 * Tips (OPTIONAL)
+** Jump back
+Run =M-x pop-tag-mark= to jump back.
 ** Native Windows Emacs
 The grep program path on Native Windows Emacs uses either forward slash or backward slash. Like "C:/rg.exe" or "C:\\\\rg.exe".
 

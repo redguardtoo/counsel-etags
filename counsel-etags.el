@@ -52,9 +52,11 @@
 ;;   `counsel-etags-universal-ctags-p' to detect if Universal Ctags is used.
 ;;   `counsel-etags-exuberant-ctags-p' to detect if Exuberant Ctags is used.
 ;;   See documentation of `counsel-etags-use-ripgrep-force' on using ripgrep.
-;;   If it's not set, correct grep program is autmatically detected.
+;;   If it's not set, correct grep program is automatically detected.
 ;;
 ;; Tips,
+;; - Use `pop-tag-mark' to jump back.
+;;
 ;; - The grep program path on Native Windows Emacs uses either forward slash or
 ;;   backward slash.  Like "C:/rg.exe" or "C:\\\\rg.exe".
 ;;   If grep program path is added to environment variable PATH, you don't need
@@ -1487,7 +1489,7 @@ Step 2, user keeps filtering tags."
 
 ;;;###autoload
 (defun counsel-etags-find-tag-at-point ()
-  "Find tag using tagname at point.
+  "Find tag using tagname at point.  Use `pop-tag-mark' to jump back.
 Please note parsing tags file containing line with 2K characters could be slow.
 That's the known issue of Emacs Lisp.  The program itself is perfectly fine."
   (interactive)
@@ -1759,7 +1761,7 @@ If FORCED-TAGS-FILE is nil, the updating process might now happen."
 (defun counsel-etags-append-to-tags-file (sections tags-file)
   "Append SECTIONS into TAGS-FILE.
 Each section is a pair of file and tags content in that file.
-File can be url template like \"https://developer.mozilla.org/en-US/docs/Web/API/%s\".
+File can be url template like \"https//myproj.com/docs/API/%s\".
 The `counsel-etags-browse-url-function' is used to open the url."
   (when (and tags-file
              (file-exists-p tags-file)
