@@ -1,6 +1,6 @@
 ;;; counsel-etags.el --- Fast and complete Ctags/Etags solution using ivy -*- lexical-binding: t -*-
 
-;; Copyright (C) 2018-2020 Chen Bin
+;; Copyright (C) 2018-2021 Chen Bin
 
 ;; Author: Chen Bin <chenbin dot sh AT gmail dot com>
 ;; URL: http://github.com/redguardtoo/counsel-etags
@@ -8,10 +8,10 @@
 ;; Keywords: tools, convenience
 ;; Version: 1.9.16
 
-;; This program is free software; you can redistribute it and/or modify
+;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3, or (at your option)
-;; any later version.
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
 
 ;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,7 +19,8 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 ;; This file is not part of GNU Emacs.
 
 ;;; Commentary:
@@ -1244,7 +1245,7 @@ Focus on TAGNAME if it's not nil."
                ;; No need to hint after user set `counsel-etags-extra-tags-files'
                (not counsel-etags-extra-tags-files)
                (not counsel-etags-can-skip-project-root))
-      (setq src-dir (read-directory-name "Ctags will scan code at:"
+      (setq src-dir (read-directory-name "Ctags will scan code at: "
                                          (counsel-etags-locate-project)))
       (cond
        (src-dir
@@ -1294,7 +1295,7 @@ For example, get a word when dot character is part of word,
   "Use Ctags to scan code at DIR."
   (interactive)
   (let* ((src-dir (or dir
-                      (read-directory-name "Ctags will scan code at:"
+                      (read-directory-name "Ctags will scan code at: "
                                            (or (counsel-etags-locate-project)
                                                default-directory)))))
     (when src-dir
@@ -1366,7 +1367,7 @@ Tags might be sorted by comparing tag's path with CURRENT-FILE."
       (message "Tags file is not ready yet."))
      ((not tagname)
       ;; OK, need use ivy-read to find candidate
-      (ivy-read "Fuzz matching tags:"
+      (ivy-read "Fuzz matching tags: "
                 `(lambda (s)
                    (counsel-etags-list-tag-function s ,current-file))
                 :history 'counsel-git-grep-history
@@ -1515,7 +1516,7 @@ That's the known issue of Emacs Lisp.  The program itself is perfectly fine."
                                   (lambda (e) (if (string= dir (cdr e)) e))
                            counsel-etags-tag-history))))
       (when collection
-        (ivy-read "Recent tag names:"
+        (ivy-read "Recent tag names: "
                   collection
                   :action `(lambda (e)
                              (counsel-etags-open-file-api (car e) (cdr e)))
@@ -1818,12 +1819,16 @@ The `counsel-etags-browse-url-function' is used to open the url."
       cands))))
 
 (ivy-set-occur 'counsel-etags-recent-tag 'counsel-etags-recent-tag-occur)
-(ivy-set-display-transformer 'counsel-etags-recent-tag 'counsel-git-grep-transformer)
+(ivy-configure #'counsel-etags-recent-tag
+  :display-transformer-fn #'counsel-git-grep-transformer)
+
 (ivy-set-occur 'counsel-etags-find-tag 'counsel-etags-find-tag-occur)
-(ivy-set-display-transformer 'counsel-etags-find-tag 'counsel-git-grep-transformer)
+(ivy-configure 'counsel-etags-find-tag
+  :display-transformer-fn 'counsel-git-grep-transformer)
 
 (ivy-set-occur 'counsel-etags-grep 'counsel-etags-grep-occur)
-(ivy-set-display-transformer 'counsel-etags-grep 'counsel-git-grep-transformer)
+(ivy-configure 'counsel-etags-grep
+  :display-transformer-fn 'counsel-git-grep-transformer)
 ;; }}
 
 (provide 'counsel-etags)
