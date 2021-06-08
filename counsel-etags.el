@@ -4,7 +4,7 @@
 
 ;; Author: Chen Bin <chenbin dot sh AT gmail dot com>
 ;; URL: http://github.com/redguardtoo/counsel-etags
-;; Package-Requires: ((emacs "25.1") (counsel "0.13.0"))
+;; Package-Requires: ((emacs "25.1") (counsel "0.13.4"))
 ;; Keywords: tools, convenience
 ;; Version: 1.9.16
 
