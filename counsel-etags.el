@@ -773,7 +773,7 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
      (t
       (message "You need install Ctags at first.  Universal Ctags is highly recommended.")))
     (when counsel-etags-debug
-      (message "counsel-etags-get-scan-command called => ctags-program=%s cmd=%s"
+      (message "counsel-etags-get-scan-command called => ctags-program=%s, scan cmd=%s"
                ctags-program cmd))
     cmd))
 
