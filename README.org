@@ -208,7 +208,8 @@ In summary, all functionalities from [[https://github.com/abo-abo/swiper][ivy]] 
 ** Grep program
 If [[https://github.com/BurntSushi/ripgrep][ripgrep]] is installed, it's used as faster grep program. Or else we fallback to =grep=.
 
-Use =M-x counsel-etags-grep= to grep in project root.
+Use =M-x counsel-etags-grep= to grep in project root which is automatically detected.  If current file is org file, current node or parent node's property
+=GREP_PROJECT_ROOT= is read to get the root directory to grep.
 
 Set =counsel-etags-grep-extra-arguments= to add extra arguments for grep.
 
