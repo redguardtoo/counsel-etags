@@ -1729,7 +1729,13 @@ If HINT is not nil, it's used as grep hint.
 ROOT is the directory to grep.  It's automatically detected.
 If current file is org file, current node or parent node's property
 \"GREP_PROJECT_ROOT\" is read to get the root directory to grep.
-If SHOW-KEYWORD-P is t, show the keyword in the minibuffer."
+If SHOW-KEYWORD-P is t, show the keyword in the minibuffer.
+
+This command uses Ivy which supports regexp negation with \"!\".
+For example, \"define key ! ivy quit\" first selects everything
+matching \"define.*key\", then removes everything matching \"ivy\",
+and finally removes everything matching \"quit\". What remains is the
+final result set of the negation regexp."
   (interactive)
   (let* ((text (if default-keyword default-keyword
                   (counsel-etags-read-keyword "Regular expression for grep: ")))
