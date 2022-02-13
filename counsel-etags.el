@@ -1737,8 +1737,11 @@ matching \"define.*key\", then removes everything matching \"ivy\",
 and finally removes everything matching \"quit\". What remains is the
 final result set of the negation regexp."
   (interactive)
-  (let* ((text (if default-keyword default-keyword
-                  (counsel-etags-read-keyword "Regular expression for grep: ")))
+  (let* ((hint (if (eq counsel-etags-convert-grep-keyword 'identity)
+                   "Regular expression for grep: "
+                 "Keyword for searching: ") )
+         (text (if default-keyword default-keyword
+                  (counsel-etags-read-keyword hint)))
          (keyword (funcall counsel-etags-convert-grep-keyword text))
          (default-directory (expand-file-name (or root
                                                   (counsel-etags-org-entry-get-project-root)
