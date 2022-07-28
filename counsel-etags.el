@@ -220,16 +220,7 @@ If rg is not in $PATH, then it need be defined in `counsel-etags-grep-program'."
   :type 'string)
 
 (defcustom counsel-etags-convert-grep-keyword 'identity
-  "Convert keyword to grep to new regex to feed into grep program.
-
-Here is code to enable grepping Chinese using pinyinlib,
-
-  (unless (featurep 'pinyinlib) (require 'pinyinlib))
-  (setq counsel-etags-convert-grep-keyword
-         (lambda (keyword)
-           (if (and keyword (> (length keyword) 0))
-               (pinyinlib-build-regexp-string keyword t)
-             keyword)))"
+  "Convert keyword to grep to new regex to feed into grep program."
   :group 'counsel-etags
   :type 'function)
 
@@ -439,7 +430,7 @@ If it's nil, nothing happens."
   '("variable"
     "constant")
   "Some imenu items should be excluded by type.
-Run 'ctags -x some-file' to see the type in second column of output."
+Run \"ctags -x some-file\" to see the type in second column of output."
   :group 'counsel-etags
   :type '(repeat 'string))
 
