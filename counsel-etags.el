@@ -220,7 +220,16 @@ If rg is not in $PATH, then it need be defined in `counsel-etags-grep-program'."
   :type 'string)
 
 (defcustom counsel-etags-convert-grep-keyword 'identity
-  "Convert keyword to grep to new regex to feed into grep program."
+  "Convert keyword to grep to new regex to feed into grep program.
+
+Here is code to enable grepping Chinese using pinyinlib,
+
+  (unless (featurep 'pinyinlib) (require 'pinyinlib))
+  (setq counsel-etags-convert-grep-keyword
+         (lambda (keyword)
+           (if (and keyword (> (length keyword) 0))
+               (pinyinlib-build-regexp-string keyword t)
+             keyword)))"
   :group 'counsel-etags
   :type 'function)
 
@@ -430,7 +439,7 @@ If it's nil, nothing happens."
   '("variable"
     "constant")
   "Some imenu items should be excluded by type.
-Run \"ctags -x some-file\" to see the type in second column of output."
+Run 'ctags -x some-file' to see the type in second column of output."
   :group 'counsel-etags
   :type '(repeat 'string))
 
@@ -1766,8 +1775,9 @@ final result set of the negation regexp."
                        (< (string-distance (car (split-string a ":")) ,ref t)
                           (string-distance (car (split-string b ":")) ,ref t)))))))
 
-    (if counsel-etags-debug (message "counsel-etags-grep called => %s %s %s %s"
-                                     keyword default-directory cmd cands))
+    (when counsel-etags-debug
+      (message "counsel-etags-grep called: keyword=%s\n  root=%s\n  cmd=%s\n  cands=%s"
+               keyword default-directory cmd cands))
     (counsel-etags-put :ignore-dirs
                        counsel-etags-ignore-directories
                        counsel-etags-opts-cache)
@@ -1876,9 +1886,12 @@ The `counsel-etags-browse-url-function' is used to open the url."
     (font-lock-mode -1))
   ;; useless to set `default-directory', it's already correct
   ;; we use regex in elisp, don't unquote regex
-  (let* ((cands (ivy--filter ivy-text
-                             (split-string (shell-command-to-string (counsel-etags-grep-cli counsel-etags-keyword t))
+  (let* ((cmd (counsel-etags-grep-cli counsel-etags-keyword t))
+         (cands (ivy--filter ivy-text
+                             (split-string (shell-command-to-string cmd)
                                            "[\r\n]+" t))))
+    (when counsel-etags-debug
+      (message "counsel-etags-grep-occur called. cmd=%s" cmd))
     (swiper--occur-insert-lines
      (mapcar
       (lambda (cand) (concat "./" cand))
