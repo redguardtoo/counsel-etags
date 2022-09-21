@@ -147,6 +147,7 @@
 (require 'etags)
 (require 'cl-lib)
 (require 'find-file)
+(require 'find-lisp)
 (require 'counsel nil t) ; counsel => swiper => ivy
 (require 'tramp nil t)
 (require 'browse-url)
@@ -532,6 +533,9 @@ The file is also used by tags file auto-update process.")
 
 (defvar counsel-etags-last-tagname-at-point nil
   "Last tagname queried at point.")
+
+(defvar counsel-etags-ignore-filenames-regexp
+  "Regex converted from `counsel-etags-ignore-filenames'.  Internal variable.")
 
 (declare-function outline-up-heading "outline")
 (declare-function org-entry-get "outline")
@@ -1800,6 +1804,44 @@ final result set of the negation regexp."
   (let* ((root (counsel-etags-parent-directory level default-directory)))
     (counsel-etags-grep nil nil root)))
 
+(defun counsel-etags-lisp-file-predicate  (file dir)
+  "True if FILE matches `find-lisp-regexp'.
+DIR is the directory containing FILE."
+  (and (not (file-directory-p (expand-file-name file dir)))
+       (not (string-match file counsel-etags-ignore-filenames-regexp))))
+
+(defun counsel-etags-lisp-directory-predicate  (dir parent)
+  "True if DIR is not a dot file, and not a symlink.
+PARENT is the parent directory of DIR."
+  ;; Skip current and parent directories
+  (not (or (string= dir ".")
+           (string= dir "..")
+           (member dir counsel-etags-ignore-directories)
+           ;; Skip directories which are symlinks
+           ;; Easy way to circumvent recursive loops
+           (file-symlink-p (expand-file-name dir parent)))))
+
+(defun counsel-etags-lisp-grep-current-directory (&optional level)
+  "Grep current directory or LEVEL up parent directory."
+  (interactive "P")
+  (unless level (setq level 0))
+  (let* ((counsel-etags-ignore-filenames-regexp
+          (concat "\\("
+                  (mapconcat (lambda (s)
+                               (setq s (replace-regexp-in-string "\\." "\\\\." s))
+                               (setq s (replace-regexp-in-string "\\*" ".*" s)))
+                             counsel-etags-ignore-filenames
+                             "\\|")
+                  "\\)\\'"))
+         (root (counsel-etags-parent-directory level default-directory))
+         (find-lisp-regexp ".*")
+         (cands (find-lisp-find-files-internal
+                 root
+                 'counsel-etags-lisp-file-predicate
+                 'counsel-etags-lisp-directory-predicate)))
+    (message "root=%s" root)
+    (message "cands=%s" cands)))
+
 ;;;###autoload
 (defun counsel-etags-update-tags-force (&optional forced-tags-file)
   "Update current tags file using default implementation.
@@ -1900,6 +1942,98 @@ The `counsel-etags-browse-url-function' is used to open the url."
 (ivy-configure 'counsel-etags-grep
   :display-transformer-fn 'counsel-git-grep-transformer)
 ;; }}
+
+    ;; (with-current-buffer
+	;; (setq outbuf
+	;;       (get-buffer-create
+    ;;            (compilation-buffer-name name-of-mode mode name-function)))
+    ;;   (let ((comp-proc (get-buffer-process (current-buffer))))
+    ;;   (if comp-proc
+    ;;       (if (or (not (eq (process-status comp-proc) 'run))
+    ;;               (eq (process-query-on-exit-flag comp-proc) nil)
+    ;;               (yes-or-no-p
+    ;;                (format "A %s process is running; kill it? "
+    ;;                        name-of-mode)))
+    ;;           (condition-case ()
+    ;;               (progn
+    ;;                 (interrupt-process comp-proc)
+    ;;                 (sit-for 1)
+    ;;                 (delete-process comp-proc))
+    ;;             (error nil))
+    ;;         (error "Cannot have two processes in `%s' at once"
+    ;;                (buffer-name)))))
+    ;;   ;; first transfer directory from where M-x compile was called
+    ;;   (setq default-directory thisdir)
+    ;;   ;; Make compilation buffer read-only.  The filter can still write it.
+    ;;   ;; Clear out the compilation buffer.
+    ;;   (let ((inhibit-read-only t)
+	;;     (default-directory thisdir))
+	;; ;; Then evaluate a cd command if any, but don't perform it yet, else
+	;; ;; start-command would do it again through the shell: (cd "..") AND
+	;; ;; sh -c "cd ..; make"
+	;; (cd (cond
+    ;;          ((not (string-match "\\`\\s *cd\\(?:\\s +\\(\\S +?\\|'[^']*'\\|\"\\(?:[^\"`$\\]\\|\\\\.\\)*\"\\)\\)?\\s *[;&\n]"
+    ;;                              command))
+    ;;           default-directory)
+    ;;          ((not (match-end 1)) "~")
+    ;;          ((eq (aref command (match-beginning 1)) ?\')
+    ;;           (substring command (1+ (match-beginning 1))
+    ;;                      (1- (match-end 1))))
+    ;;          ((eq (aref command (match-beginning 1)) ?\")
+    ;;           (replace-regexp-in-string
+    ;;            "\\\\\\(.\\)" "\\1"
+    ;;            (substring command (1+ (match-beginning 1))
+    ;;                       (1- (match-end 1)))))
+    ;;          ;; Try globbing as well (bug#15417).
+    ;;          (t (let* ((substituted-dir
+    ;;                     (substitute-env-vars (match-string 1 command)))
+    ;;                    ;; FIXME: This also tries to expand `*' that were
+    ;;                    ;; introduced by the envvar expansion!
+    ;;                    (expanded-dir
+    ;;                     (file-expand-wildcards substituted-dir)))
+    ;;               (if (= (length expanded-dir) 1)
+    ;;                   (car expanded-dir)
+    ;;                 substituted-dir)))))
+	;; (erase-buffer)
+	;; ;; Select the desired mode.
+	;; (if (not (eq mode t))
+    ;;         (progn
+    ;;           (buffer-disable-undo)
+    ;;           (funcall mode))
+	;;   (setq buffer-read-only nil)
+	;;   (with-no-warnings (comint-mode))
+	;;   (compilation-shell-minor-mode))
+    ;;     ;; Remember the original dir, so we can use it when we recompile.
+    ;;     ;; default-directory' can't be used reliably for that because it may be
+    ;;     ;; affected by the special handling of "cd ...;".
+    ;;     ;; NB: must be done after (funcall mode) as that resets local variables
+    ;;     (setq-local compilation-directory thisdir)
+    ;;     (setq-local compilation-environment thisenv)
+    ;;     (if buffer-path
+    ;;         (setq-local exec-path buffer-path)
+    ;;       (kill-local-variable 'exec-path))
+    ;;     (if buffer-env
+    ;;         (setq-local process-environment buffer-env)
+    ;;       (kill-local-variable 'process-environment))
+	;; (if highlight-regexp
+    ;;         (setq-local compilation-highlight-regexp highlight-regexp))
+    ;;     (if (or compilation-auto-jump-to-first-error
+	;; 	(eq compilation-scroll-output 'first-error))
+    ;;         (setq-local compilation-auto-jump-to-next t))
+	;; ;; Output a mode setter, for saving and later reloading this buffer.
+	;; (insert "-*- mode: " name-of-mode
+	;; 	"; default-directory: "
+    ;;             (prin1-to-string (abbreviate-file-name default-directory))
+	;; 	" -*-\n"
+	;; 	(format "%s started at %s\n\n"
+	;; 		mode-name
+	;; 		(substring (current-time-string) 0 19))
+	;; 	command "\n")
+    ;;     ;; Mark the end of the header so that we don't interpret
+    ;;     ;; anything in it as an error.
+    ;;     (put-text-property (1- (point)) (point) 'compilation-header-end t)
+	;; (setq thisdir default-directory))
+    ;;   (set-buffer-modified-p nil))
 
 (provide 'counsel-etags)
 ;;; counsel-etags.el ends here
