@@ -1647,7 +1647,7 @@ If SYMBOL-AT-POINT is nil, don't read symbol at point."
 
 (defun counsel-etags-has-quick-grep-p ()
   "Test if ripgrep program exist."
-  (or counsel-etags-use-ripgrep-force (executable-find "rg")))
+  (or counsel-etags-use-ripgrep-force (counsel-etags-guess-program "rg")))
 
 (defun counsel-etags-shell-quote (argument)
   "Quote ARGUMENT."
@@ -1688,7 +1688,7 @@ Extended regex is used, like (pattern1|pattern2)."
     ;; behavior of grep
     (format "\"%s\" %s %s --hidden %s \"%s\" --"
             ;; if rg is not in $PATH, then it's in `counsel-etags-grep-program'
-            (or (executable-find "rg") counsel-etags-grep-program)
+            (or (counsel-etags-guess-program "rg") counsel-etags-grep-program)
             ;; (if counsel-etags-debug " --debug")
             counsel-etags-ripgrep-default-options
             counsel-etags-grep-extra-arguments
