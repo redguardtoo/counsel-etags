@@ -1112,7 +1112,7 @@ Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
                                    (beginning-of-line)
                                    (counsel-etags-push-one-candidate cands
                                                                      tagname-re
-                                                                     (point-at-eol)
+                                                                     (line-end-position)
                                                                      root-dir))))
     (and cands (nreverse cands))))
 
@@ -1502,7 +1502,7 @@ Tags might be sorted by comparing tag's path with CURRENT-FILE."
           (let* ((name (car c)))
             (goto-char (point-min))
             (counsel-etags-forward-line (cdr c))
-            (when (search-forward name (point-at-eol) t)
+            (when (search-forward name (line-end-position) t)
               (forward-char (- (length name))))
             (push (cons name (point-marker)) imenu-items))))
 
