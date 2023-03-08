@@ -189,7 +189,7 @@ not exist, it is replaced (silently) with an empty string.
 Symbol location inside tags file should use absolute path.
 A CLI to create tags file:
 
-  find /usr/include | ctags -e -L -"
+  find /usr/include | ctags -e -L --tag-relative=never -"
   :group 'counsel-etags
   :type '(repeat 'string))
 
@@ -791,7 +791,7 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
      ;; Use ctags only
      (ctags-program
       (setq cmd
-            (format "%s %s %s -e %s %s %s -R %s"
+            (format "%s %s %s -e %s %s %s -R %s --tag-relative=never"
                     ctags-program
                     (mapconcat (lambda (p)
                                  (format "--exclude=\"*/%s/*\" --exclude=\"%s/*\""
