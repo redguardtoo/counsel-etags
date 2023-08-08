@@ -1515,12 +1515,12 @@ Tags might be sorted by comparing tag's path with CURRENT-FILE."
 (defun counsel-etags-list-tag-in-current-file()
   "List tags in current file."
   (interactive)
-  (let* ((imenu-items (counsel-etags-imenu-default-create-index-function)))
-    (when imenu-items
-      (ivy-read "Tag names in current file: "
-                imenu-items
-                :action (lambda (e)
-                          (goto-char (cdr e)))))))
+  (let* ((imenu-items (counsel-etags-imenu-default-create-index-function))
+         (selected (and imenu-items
+                             (completing-read "Tag names in current file: "
+                                            imenu-items))))
+      (when selected
+        (goto-char (cdr (assoc selected imenu-items))))))
 
 ;;;###autoload
 (defun counsel-etags-find-tag ()
