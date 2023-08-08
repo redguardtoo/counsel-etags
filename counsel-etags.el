@@ -1680,28 +1680,33 @@ If SYMBOL-AT-POINT is nil, don't read symbol at point."
                            (format "--exclude=\"%s\"" (counsel-etags-shell-quote e)))
                          ignore-file-names " "))))))
 
-(defun counsel-etags-grep-cli (keyword &optional use-cache)
-  "Use KEYWORD and USE-CACHE to build CLI.
+(defun counsel-etags-grep-run-cli (keyword &optional use-cache)
+  "Use KEYWORD and USE-CACHE to run grep.  Then return the candidates.
 Extended regex is used, like (pattern1|pattern2)."
-  (cond
-   ((counsel-etags-has-quick-grep-p)
-    ;; "--hidden" force ripgrep to search hidden files/directories, that's default
-    ;; behavior of grep
-    (format "\"%s\" %s %s --hidden %s \"%s\" --"
-            ;; if rg is not in $PATH, then it's in `counsel-etags-grep-program'
-            (or (counsel-etags-guess-program "rg") counsel-etags-grep-program)
-            ;; (if counsel-etags-debug " --debug")
-            counsel-etags-ripgrep-default-options
-            counsel-etags-grep-extra-arguments
-            (counsel-etags-exclude-opts use-cache)
-            keyword))
-   (t
-    ;; use extended regex always
-    (format "\"%s\" -rsnE %s %s \"%s\" *"
-            (or counsel-etags-grep-program (counsel-etags-guess-program "grep"))
-            counsel-etags-grep-extra-arguments
-            (counsel-etags-exclude-opts use-cache)
-            keyword))))
+  (let* ((grep-cmd (cond
+               ((counsel-etags-has-quick-grep-p)
+                ;; "--hidden" force ripgrep to search hidden files/directories, that's default
+                ;; behavior of grep
+                (format "\"%s\" %s %s --hidden %s \"%s\" --"
+                        ;; if rg is not in $PATH, then it's in `counsel-etags-grep-program'
+                        (or (counsel-etags-guess-program "rg") counsel-etags-grep-program)
+                        ;; (if counsel-etags-debug " --debug")
+                        counsel-etags-ripgrep-default-options
+                        counsel-etags-grep-extra-arguments
+                        (counsel-etags-exclude-opts use-cache)
+                        keyword))
+               (t
+                ;; use extended regex always
+                (format "\"%s\" -rsnE %s %s \"%s\" *"
+                        (or counsel-etags-grep-program (counsel-etags-guess-program "grep"))
+                        counsel-etags-grep-extra-arguments
+                        (counsel-etags-exclude-opts use-cache)
+                        keyword))))
+         (cands (split-string (shell-command-to-string grep-cmd) "[\r\n]+" t)))
+
+    (when counsel-etags-debug
+      (message "counsel-etags-grep-run-cli called. grep-cmd=%s cands=%s" grep-cmd cands))
+    cands))
 
 (defun counsel-etags-parent-directory (level directory)
   "Return LEVEL up parent directory of DIRECTORY."
@@ -1747,8 +1752,7 @@ final result set of the negation regexp."
                                                   (counsel-etags-locate-project)
                                                   default-directory)))
          (time (current-time))
-         (cmd (counsel-etags-grep-cli keyword nil))
-         (cands (split-string (shell-command-to-string cmd) "[\r\n]+" t))
+         (cands (counsel-etags-grep-run-cli keyword nil))
          (dir-summary (counsel-etags-dirname default-directory)))
 
     (when (and cands
@@ -1768,8 +1772,8 @@ final result set of the negation regexp."
                           (string-distance (car (split-string b ":")) ,ref t)))))))
 
     (when counsel-etags-debug
-      (message "counsel-etags-grep called: keyword=%s\n  root=%s\n  cmd=%s\n  cands=%s"
-               keyword default-directory cmd cands))
+      (message "counsel-etags-grep called: keyword=%s\n root=%s\n cands=%s"
+               keyword default-directory cands))
     (counsel-etags-put :ignore-dirs
                        counsel-etags-ignore-directories
                        counsel-etags-opts-cache)
@@ -1885,12 +1889,10 @@ _CANDS is ignored."
     (font-lock-mode -1))
   ;; useless to set `default-directory', it's already correct
   ;; we use regex in elisp, don't unquote regex
-  (let* ((cmd (counsel-etags-grep-cli counsel-etags-keyword t))
-         (cands (ivy--filter ivy-text
-                             (split-string (shell-command-to-string cmd)
-                                           "[\r\n]+" t))))
+  (let* ((cands (ivy--filter ivy-text
+                             (counsel-etags-grep-run-cli counsel-etags-keyword t))))
     (when counsel-etags-debug
-      (message "counsel-etags-grep-occur called. cmd=%s" cmd))
+      (message "counsel-etags-grep-occur called."))
     (swiper--occur-insert-lines
      (mapcar
       (lambda (cand) (concat "./" cand))
