@@ -147,6 +147,7 @@
 (require 'etags)
 (require 'cl-lib)
 (require 'find-file)
+(require 'ivy nil t)
 (require 'counsel nil t) ; counsel => swiper => ivy
 (require 'tramp nil t)
 (require 'browse-url)
@@ -1849,10 +1850,15 @@ The `counsel-etags-browse-url-function' is used to open the url."
 ;; {{ occur setup
 (defun counsel-etags-tag-occur-api (items)
   "Create occur buffer for ITEMS."
+  (message "b major-mode=%s" major-mode)
   (unless (eq major-mode 'ivy-occur-grep-mode)
     (ivy-occur-grep-mode))
+  (message "major-mode=%s" major-mode)
+  (message "(buffer-string)=%s" (buffer-string))
   ;; we use regex in elisp, don't unquote regex
-  (let* ((cands (ivy--filter ivy-text items)))
+  (let ((cands (ivy--filter ivy-text items)))
+    (when buffer-read-only
+      (setq buffer-read-only nil))
     ;; Need precise number of header lines for `wgrep' to work.
     (insert (format "-*- mode:grep; default-directory: %S -*-\n\n\n"
                     (file-name-directory (counsel-etags-locate-tags-file))))
@@ -1862,12 +1868,14 @@ The `counsel-etags-browse-url-function' is used to open the url."
       (lambda (cand) (concat "./" cand))
       cands))))
 
-(defun counsel-etags-recent-tag-occur ()
-  "Open occur buffer for `counsel-etags-recent-tag'."
+(defun counsel-etags-recent-tag-occur (&optional _cands)
+  "Open occur buffer for `counsel-etags-recent-tag'.
+_CANDS is ignored."
   (counsel-etags-tag-occur-api counsel-etags-tag-history))
 
-(defun counsel-etags-find-tag-occur ()
-  "Open occur buffer for `counsel-etags-find-tag' and `counsel-etags-list-tag'."
+(defun counsel-etags-find-tag-occur (&optional _cands)
+  "Open occur buffer for `counsel-etags-find-tag' and `counsel-etags-list-tag'.
+_CANDS is ignored."
   (counsel-etags-tag-occur-api counsel-etags-find-tag-candidates))
 
 (defun counsel-etags-grep-occur (&optional _cands)
