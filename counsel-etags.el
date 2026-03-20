@@ -992,22 +992,6 @@ Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
        (end-of-line)
        nil)))
 
-(defmacro counsel-etags-scan-string (str tagname-re case-sensitive &rest body)
-  "Scan STR using TAGNAME-RE and CASE-SENSITIVE and call BODY to push results."
-  `(with-temp-buffer
-    (insert ,str)
-    ;; Not sure why `modify-syntax-entry' is used
-    ;; Code is from https://www.emacswiki.org/emacs/etags-select.el
-    (modify-syntax-entry ?_ "w")
-    (goto-char (point-min))
-    (let* ((case-fold-search ,case-sensitive))
-      ;; normal tag search algorithm
-      (while (re-search-forward ,tagname-re nil t)
-        ,@body))
-    ;; clean up, copied from "etags-select.el"
-    (modify-syntax-entry ?_ "_")))
-
-
 (defun counsel-etags-search-regex (tagname)
   "Get regex to search TAGNAME which could be nil."
   (concat "\\([^\177\001\n]+\\)\177\\("
@@ -1049,15 +1033,18 @@ Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
 
     (when (and tags-file
                (setq file-content (counsel-etags-cache-content tags-file)))
-      (counsel-etags-scan-string file-content
-                                 tagname
-                                 fuzzy
-                                 (progn
-                                   (beginning-of-line)
-                                   (counsel-etags-push-one-candidate cands
-                                                                     tagname-re
-                                                                     (line-end-position)
-                                                                     root-dir))))
+      (with-temp-buffer
+        (insert file-content)
+        (with-syntax-table (copy-syntax-table (syntax-table))
+          (modify-syntax-entry ?_ "w")
+          (goto-char (point-min))
+          (let ((case-fold-search fuzzy))
+            (while (re-search-forward tagname nil t)
+              (beginning-of-line)
+              (counsel-etags-push-one-candidate cands
+                                                tagname-re
+                                                (line-end-position)
+                                                root-dir))))))
     (and cands (nreverse cands))))
 
 (defun counsel-etags-collect-cands (tagname fuzzy current-file &optional dir)
