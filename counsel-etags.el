@@ -192,7 +192,7 @@ A CLI to create tags file:
 
   find /usr/include | ctags -e -L -"
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-stop-auto-update-tags nil
   "If t, tags will not be updated automatically."
@@ -268,7 +268,7 @@ If candidates number is greater than this value, show all raw candidates."
   "Major mode where default tag name need be stripped.
 It's used by `counsel-etags-find-tag-name-default'."
   :group 'counsel-etags
-  :type '(repeat 'sexp))
+  :type '(repeat sexp))
 
 (defcustom counsel-etags-ignore-directories
   '(;; VCS
@@ -299,7 +299,7 @@ It's used by `counsel-etags-find-tag-name-default'."
     ".cask")
   "Ignore directory names."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-ignore-filenames
   '(;; VCS
@@ -371,13 +371,13 @@ It's used by `counsel-etags-find-tag-name-default'."
     "*.pyc")
   "Ignore file names.  Wildcast is supported."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-project-file '("TAGS" "tags" ".svn" ".hg" ".git")
   "The file/directory used to locate project root directory.
 You can set up it in \".dir-locals.el\"."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-project-root nil
   "Project root directory.  The directory automatically detects if it's nil."
@@ -430,7 +430,7 @@ If it's nil, nothing happens."
     "let")
   "Some imenu items should be excluded by name."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-imenu-excluded-types
   '("variable"
@@ -438,7 +438,7 @@ If it's nil, nothing happens."
   "Some imenu items should be excluded by type.
 Run \"ctags -x some-file\" to see the type in second column of output."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-candidates-optimize-limit 256
   "Sort candidates if its size is less than this variable's value.
