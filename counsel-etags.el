@@ -1,12 +1,12 @@
 ;;; counsel-etags.el --- Fast and complete Ctags/Etags solution using ivy -*- lexical-binding: t -*-
 
-;; Copyright (C) 2018-2021 Chen Bin
+;; Copyright (C) 2018-2026 Chen Bin
 
 ;; Author: Chen Bin <chenbin dot sh AT gmail dot com>
 ;; URL: http://github.com/redguardtoo/counsel-etags
-;; Package-Requires: ((emacs "26.1") (counsel "0.13.4"))
+;; Package-Requires: ((emacs "28.1") (counsel "0.15.1"))
 ;; Keywords: tools, convenience
-;; Version: 1.10.1
+;; Version: 1.11.0
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -596,7 +596,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "1.10.1"))
+  (message "1.11.0"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -905,56 +905,6 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
       (setq start (+ start (length included))))
     (concat raw-content extra-content)))
 
-(defmacro counsel-etags--tset (table x y val row-width)
-  "Set TABLE cell at position (X, Y) with VAL and ROW-WIDTH."
-  `(aset ,table (+ ,x (* ,row-width ,y)) ,val))
-
-(defmacro counsel-etags--tref (table x y row-width)
-  "Get TABLE cell at position (X, Y) with ROW-WIDTH."
-  `(aref ,table (+ ,x (* ,row-width ,y))))
-
-(defun counsel-etags-levenshtein-distance (str1 str2 hash)
-  "Return the edit distance between strings STR1 and STR2.
-HASH store the previous distance."
-  (let* ((val (gethash str1 hash)))
-    (unless val
-      (let* ((length-str1 (length str1))
-             (length-str2 (length str2))
-             ;; it's impossible files name has more than 512 characters
-             (d (make-vector (* (1+ length-str1) (1+ length-str2)) 0))
-             ;; d is a table with lenStr2+1 rows and lenStr1+1 columns
-             (row-width (1+ length-str1))
-             (i 0)
-             (j 0))
-        ;; i and j are used to iterate over str1 and str2
-        (while (<= i length-str1) ;; for i from 0 to lenStr1
-          (counsel-etags--tset d i 0 i row-width) ;; d[i, 0] := i
-          (setq i (1+ i)))
-        (while (<= j length-str2) ;; for j from 0 to lenStr2
-          (counsel-etags--tset d 0 j j row-width) ;; d[0, j] := j
-          (setq j (1+ j)))
-        (setq i 1)
-        (while (<= i length-str1) ;; for i from 1 to lenStr1
-          (setq j 1)
-          (while (<= j length-str2) ;; for j from 1 to lenStr2
-            (let* ((cost
-                    ;; if str[i] = str[j] then cost:= 0 else cost := 1
-                    (if (equal (aref str1 (1- i)) (aref str2 (1- j))) 0 1))
-                   ;; d[i-1, j] + 1     // deletion
-                   (deletion (1+ (counsel-etags--tref d (1- i) j row-width)))
-                   ;; d[i, j-1] + 1     // insertion
-                   (insertion (1+ (counsel-etags--tref d i (1- j) row-width)))
-                   ;; d[i-j,j-1] + cost // substitution
-                   (substitution (+ (counsel-etags--tref d (1- i) (1- j) row-width) cost))
-                   (distance (min insertion deletion substitution)))
-              (counsel-etags--tset d i j distance row-width)
-              (setq j (1+ j))))
-          (setq i (1+ i))) ;; i++
-        ;; return d[lenStr1, lenStr2] or the max distance
-        (setq val (counsel-etags--tref d length-str1 length-str2 row-width))
-        (puthash str1 val hash)))
-    val))
-
 (defun counsel-etags--strip-path (path strip-count)
   "Strip PATH with STRIP-COUNT."
   (let* ((i (1- (length path))))
@@ -980,25 +930,13 @@ CURRENT-FILE is used to compare with candidate path."
       cands)
 
      ; sort in C
-     ((fboundp 'string-distance)
-      ;; Emacs 27 `string-distance' is much faster than Lisp implementation.
+     (t
       (sort cands
             `(lambda (item1 item2)
                (let* ((a (counsel-etags--strip-path (expand-file-name (if ,is-string item1 (cadr item1))) ,strip-count))
                       (b (counsel-etags--strip-path (expand-file-name (if ,is-string item2 (cadr item2))) ,strip-count)))
                  (< (string-distance a ,ref t)
-                    (string-distance b ,ref t))))))
-
-     ;; sort in Lisp. It's slow so `counsel-etags-candidates-optimize-limit'
-     ;; limits the maximum number of candidates to be sorted
-     (t
-      (let* ((h (make-hash-table :test 'equal)))
-        (sort cands
-              `(lambda (item1 item2)
-                 (let* ((a (counsel-etags--strip-path (expand-file-name (if ,is-string item1 (cadr item1))) ,strip-count))
-                        (b (counsel-etags--strip-path (expand-file-name (if ,is-string item2 (cadr item2))) ,strip-count)))
-                   (< (counsel-etags-levenshtein-distance a ,ref ,h)
-                      (counsel-etags-levenshtein-distance b ,ref ,h))))))))))
+                    (string-distance b ,ref t)))))))))
 
 
 (defun counsel-etags-cache-invalidate (tags-file)
