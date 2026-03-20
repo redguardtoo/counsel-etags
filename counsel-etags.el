@@ -968,40 +968,12 @@ If SHOW-ONLY-TEXT is t, the candidate shows only text."
     (cons head
           (list file lnum tagname))))
 
-(defmacro counsel-etags-push-one-candidate (cands tagname-re bound root-dir)
-  "Push new candidate into CANDS.
-Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
-    `(cond
-      ((re-search-forward ,tagname-re ,bound t)
-       (let* ((line-number (match-string-no-properties 3))
-              (text (match-string-no-properties 1))
-              ;; file must be set after above variables
-              (file (etags-file-of-tag t))
-              (cand (list :file file ; relative path
-                          :fullpath (if (file-name-absolute-p file) file
-                                      (concat ,root-dir file)) ; absolute path
-                          :line-number line-number
-                          :text text
-                          :tagname (match-string-no-properties 2))))
-         ;; if root-dir is nil, only one file is processed.
-         ;; So don't bother about file path
-         (push (counsel-etags-build-cand cand) ,cands))
-       t)
-      (t
-       ;; need push cursor forward
-       (end-of-line)
-       nil)))
-
-(defun counsel-etags-search-regex (tagname)
-  "Get regex to search TAGNAME which could be nil."
-  (concat "\\([^\177\001\n]+\\)\177\\("
-          (or tagname "[^\177\001\n]+")
-          "\\)\001\\([0-9]+\\),\\([0-9]+\\)"))
-
 (defun counsel-etags-extract-cands (tags-file tagname fuzzy)
   "Parse TAGS-FILE to find occurrences of TAGNAME using FUZZY algorithm."
   (let* ((root-dir (file-name-directory tags-file))
-         (tagname-re (counsel-etags-search-regex (unless fuzzy tagname)))
+         (tagname-re (concat "\\([^\177\001\n]+\\)\177\\("
+                             (or (unless fuzzy tagname) "[^\177\001\n]+")
+                             "\\)\001\\([0-9]+\\),\\([0-9]+\\)"))
          cands
          file-size
          file-content)
@@ -1035,16 +1007,31 @@ Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
                (setq file-content (counsel-etags-cache-content tags-file)))
       (with-temp-buffer
         (insert file-content)
-        (with-syntax-table (copy-syntax-table (syntax-table))
-          (modify-syntax-entry ?_ "w")
-          (goto-char (point-min))
-          (let ((case-fold-search fuzzy))
-            (while (re-search-forward tagname nil t)
-              (beginning-of-line)
-              (counsel-etags-push-one-candidate cands
-                                                tagname-re
-                                                (line-end-position)
-                                                root-dir))))))
+        (goto-char (point-min))
+        (let ((case-fold-search fuzzy))
+          ;; search line containing `tagname' first
+          (while (re-search-forward tagname nil t)
+            (beginning-of-line)
+            (cond
+             ((re-search-forward tagname-re (line-end-position) t)
+              (let* ((line-number (match-string-no-properties 3))
+                     (text (match-string-no-properties 1))
+                     ;; file must be set after above variables
+                     (file (etags-file-of-tag t))
+                     (cand (list :file file ; relative path
+                                 :fullpath (if (file-name-absolute-p file) file
+                                             (concat root-dir file)) ; absolute path
+                                 :line-number line-number
+                                 :text text
+                                 :tagname (match-string-no-properties 2))))
+                ;; if root-dir is nil, only one file is processed.
+                ;; So don't bother about file path
+                (push (counsel-etags-build-cand cand) cands))
+              t)
+             (t
+              ;; need push cursor forward
+              (end-of-line)
+              nil))))))
     (and cands (nreverse cands))))
 
 (defun counsel-etags-collect-cands (tagname fuzzy current-file &optional dir)
