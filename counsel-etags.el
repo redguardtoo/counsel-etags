@@ -1,10 +1,10 @@
-;;; counsel-etags.el --- Fast and complete Ctags/Etags solution using ivy -*- lexical-binding: t -*-
+;;; counsel-etags.el --- Fast and complete Ctags solution using ivy -*- lexical-binding: t -*-
 
-;; Copyright (C) 2018-2021 Chen Bin
+;; Copyright (C) 2018-2026 Chen Bin
 
-;; Author: Chen Bin <chenbin dot sh AT gmail dot com>
+;; Author: Chen Bin
 ;; URL: http://github.com/redguardtoo/counsel-etags
-;; Package-Requires: ((emacs "26.1") (counsel "0.13.4"))
+;; Package-Requires: ((emacs "29.1") (counsel "0.13.4"))
 ;; Keywords: tools, convenience
 ;; Version: 1.10.1
 
@@ -27,7 +27,7 @@
 
 ;;  Configuration,
 ;;
-;;   "Ctags" (Universal Ctags is recommended) should exist.
+;;   "Ctags" (Universal Ctags is required) should exist.
 ;;   Or else, customize `counsel-etags-update-tags-backend' to generate tags file.
 ;;   Please note etags bundled with Emacs is not supported any more.
 ;;
@@ -50,8 +50,6 @@
 ;;   `counsel-etags-update-tags-force' to update current tags file by force
 ;;   `counsel-etags-ignore-config-file' specifies paths of ignore configuration files
 ;;   (".gitignore", ".hgignore", etc).  Path is either absolute or relative to the tags file.
-;;   `counsel-etags-universal-ctags-p' to detect if Universal Ctags is used.
-;;   `counsel-etags-exuberant-ctags-p' to detect if Exuberant Ctags is used.
 ;;   See documentation of `counsel-etags-use-ripgrep-force' on using ripgrep.
 ;;   If it's not set, correct grep program is automatically detected.
 ;;
@@ -123,12 +121,7 @@
 ;;    cli options as "--exclude="@/ignore/file/path".
 ;;    Set `counsel-etags-ignore-config-files' to nil to turn off this feature.
 ;;
-;;  - If base configuration file "~/.ctags.exuberant" exists, it's used to
-;;    generate "~/.ctags" automatically.
-;;    "~/.ctags.exuberant" is Exuberant Ctags format, but the "~/.ctags" could be
-;;    Universal Ctags format if Universal Ctags is used.
-;;    You can customize `counsel-etags-ctags-options-base' to change the path of
-;;    base configuration file.
+;;  - Only universal ctags is supported since v2.0.0
 
 ;;  - Grep result is sorted by string distance of current file path and candidate file path.
 ;;    The sorting happens in Emacs 27+.
@@ -192,7 +185,7 @@ A CLI to create tags file:
 
   find /usr/include | ctags -e -L -"
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-stop-auto-update-tags nil
   "If t, tags will not be updated automatically."
@@ -263,7 +256,7 @@ If candidates number is greater than this value, show all raw candidates."
   "Major mode where default tag name need be stripped.
 It's used by `counsel-etags-find-tag-name-default'."
   :group 'counsel-etags
-  :type '(repeat 'sexp))
+  :type '(repeat sexp))
 
 (defcustom counsel-etags-ignore-directories
   '(;; VCS
@@ -294,7 +287,7 @@ It's used by `counsel-etags-find-tag-name-default'."
     ".cask")
   "Ignore directory names."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-ignore-filenames
   '(;; VCS
@@ -366,13 +359,13 @@ It's used by `counsel-etags-find-tag-name-default'."
     "*.pyc")
   "Ignore file names.  Wildcast is supported."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-project-file '("TAGS" "tags" ".svn" ".hg" ".git")
   "The file/directory used to locate project root directory.
 You can set up it in \".dir-locals.el\"."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-project-root nil
   "Project root directory.  The directory automatically detects if it's nil."
@@ -381,31 +374,6 @@ You can set up it in \".dir-locals.el\"."
 
 (defcustom counsel-etags-tags-file-name "TAGS"
   "Tags file name."
-  :group 'counsel-etags
-  :type 'string)
-
-(defcustom counsel-etags-ctags-options-file "~/.ctags"
-  "File to read options from, like \"~/.ctags\".
-Universal Ctags won't read options from \"~/.ctags\" by default.
-So we force Universal Ctags to load \"~/.ctags\".
-
-Exuberant Ctags can NOT read option file \".ctags\" through cli option.
-
-So we use Emacs Lisp to load \"~.ctags\".
-
-Use file name \"ctags.cnf\" instead \".ctags\" if it needs change.
-
-Universal Ctags does NOT have this bug.
-
-Please do NOT exclude system temporary folder in ctags configuration
-because imenu functions need create and scan files in this folder."
-  :group 'counsel-etags
-  :type 'string)
-
-(defcustom counsel-etags-ctags-options-base "~/.ctags.exuberant"
-  "Ctags configuration base use by all Ctags implementations.
-Universal Ctags converts it to `counsel-etags-ctags-options-file'.
-If it's nil, nothing happens."
   :group 'counsel-etags
   :type 'string)
 
@@ -425,7 +393,7 @@ If it's nil, nothing happens."
     "let")
   "Some imenu items should be excluded by name."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-imenu-excluded-types
   '("variable"
@@ -433,7 +401,7 @@ If it's nil, nothing happens."
   "Some imenu items should be excluded by type.
 Run \"ctags -x some-file\" to see the type in second column of output."
   :group 'counsel-etags
-  :type '(repeat 'string))
+  :type '(repeat string))
 
 (defcustom counsel-etags-candidates-optimize-limit 256
   "Sort candidates if its size is less than this variable's value.
@@ -688,19 +656,6 @@ Return nil if it's not found."
   "Get CTAGS-PROGRAM information."
   (shell-command-to-string (concat ctags-program " --version")))
 
-;;;###autoload
-(defun counsel-etags-exuberant-ctags-p (ctags-program)
-  "If CTAGS-PROGRAM is Exuberant Ctags."
-  (let* ((cmd-output (counsel-etags--ctags--info ctags-program)))
-    (and (not (string-match-p "Universal Ctags" cmd-output))
-         (string-match-p "Exuberant Ctags" cmd-output))))
-
-;;;###autoload
-(defun counsel-etags-universal-ctags-p (ctags-program)
-  "If CTAGS-PROGRAM is Universal Ctags."
-  (and (executable-find ctags-program)
-       (not (counsel-etags-exuberant-ctags-p ctags-program))))
-
 (defun counsel-etags-valid-ctags (ctags-program)
   "If CTAGS-PROGRAM is Ctags return the program.
 If it's Emacs etags return nil."
@@ -713,11 +668,6 @@ If it's Emacs etags return nil."
   "List languages CTAGS-PROGRAM supports."
   (let* ((cmd (concat ctags-program " --list-languages")))
     (split-string (shell-command-to-string cmd) "\n")))
-
-(defun counsel-etags-universal-ctags-opt ()
-  "Generate option for Universal ctags."
-  (format "--options=\"%s\""
-          (expand-file-name counsel-etags-ctags-options-file)))
 
 (defun counsel-etags-convert-config (config program)
   "Convert CONFIG of PROGRAM into Universal Ctags format."
@@ -734,44 +684,6 @@ If it's Emacs etags return nil."
                             (substring-no-properties lang 1)))
         (setq rlt (replace-regexp-in-string regex "" rlt))))
     rlt))
-
-(defun counsel-etags-ctags-options-file-cli (program)
-  "Use PROGRAM to create cli for `counsel-etags-ctags-options-file'."
-  (let* (str
-         (exuberant-ctags-p (counsel-etags-exuberant-ctags-p program)))
-    (cond
-     ;; Don't use any configuration file at all
-     ((or (not counsel-etags-ctags-options-file)
-          (string= counsel-etags-ctags-options-file ""))
-      "")
-
-     ;; ~/.ctags.exuberant => ~/.ctags
-     ((file-exists-p counsel-etags-ctags-options-base)
-      (setq str
-            (counsel-etags-read-internal counsel-etags-ctags-options-base))
-      (unless exuberant-ctags-p
-        ;; Universal Ctags
-        (setq str (counsel-etags-convert-config str program)))
-      ;; Make sure ~/.ctags exist
-      (counsel-etags-write-internal str counsel-etags-ctags-options-file)
-      ;; OK, no we can pass option to cli
-      (if exuberant-ctags-p "" (counsel-etags-universal-ctags-opt)))
-
-     ;; ~/.ctags is missing
-     ((not (file-exists-p counsel-etags-ctags-options-file))
-      "")
-
-     ;; If options file is "~/.ctags" and Exuberant Ctags is used
-     ;; "~/.ctags" won't be loaded.
-     ;; But if options file is empty, "~/.ctags" will be loaded.
-     ;; It's a bug of Exuberant Ctags, work around here.
-     (exuberant-ctags-p
-      ;; For Exuberant Ctags, I only accept ~/.ctags
-      "")
-
-     ;; Universal Ctags
-     (t
-      (counsel-etags-universal-ctags-opt)))))
 
 (defun counsel-etags-ctags-ignore-config ()
   "Specify ignore configuration file (.gitignore, for example) for Ctags."
@@ -792,7 +704,7 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
      ;; Use ctags only
      (ctags-program
       (setq cmd
-            (format "%s %s %s -e %s %s %s -R %s"
+            (format "%s %s %s -e %s %s -R %s"
                     ctags-program
                     (mapconcat (lambda (p)
                                  (format "--exclude=\"*/%s/*\" --exclude=\"%s/*\""
@@ -802,7 +714,6 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
                     (mapconcat (lambda (p)
                                  (format "--exclude=\"%s\"" p))
                                counsel-etags-ignore-filenames " ")
-                    (counsel-etags-ctags-options-file-cli ctags-program)
                     (counsel-etags-ctags-ignore-config)
                     ;; print a tabular, human-readable cross reference
                     ;; --<my-lang>-kinds=f still accept all user defined regex
@@ -831,7 +742,7 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
          (cmd (counsel-etags-get-scan-command ctags-program))
          (tags-file (counsel-etags-get-tags-file-path src-dir)))
     (unless ctags-program
-      (error "Please install Exuberant Ctags or Universal Ctags before running this program!"))
+      (error "Please install Universal Ctags before running this program!"))
     (when counsel-etags-debug
       (message "counsel-etags-scan-dir-internal called => src-dir=%s" src-dir)
       (message "default-directory=%s cmd=%s" default-directory cmd))
