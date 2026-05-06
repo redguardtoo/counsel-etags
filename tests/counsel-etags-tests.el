@@ -1,6 +1,6 @@
 ;; counsel-etags-tests.el --- unit tests for counsel-etags -*- coding: utf-8 -*-
 
-;; Author: Chen Bin <chenbin DOT sh AT gmail DOT com>
+;; Author: Chen Bin
 
 ;;; License:
 
@@ -36,15 +36,15 @@
   ;; one hello function, one hello method and one test method in hello.js
   (let* (cands
          context
-         (tags-file (get-full-path "TAGS.test")))
+         (tags-file (get-full-path "tags-in-vim-format")))
     ;; all tags across project, case insensitive, fuzzy match.
     ;; So "CHello" is also included
     (setq cands (counsel-etags-extract-cands tags-file "hello" t))
-    (should (eq (length cands) 4))
+    (should (eq (length cands) 3))
 
     ;; all tags across project, case sensitive
     (setq cands (counsel-etags-extract-cands tags-file "hello" nil))
-    (should (eq (length cands) 3))
+    (should (eq (length cands) 2))
 
     ;; one function named "test"
     (setq cands (counsel-etags-extract-cands tags-file "test" nil))
@@ -52,39 +52,39 @@
 
 (ert-deftest counsel-etags-test-sort-cands-by-filename ()
   (let* (cands
-         (tags-file (get-full-path "TAGS.test")))
+         (tags-file (get-full-path "tags-in-vim-format")))
     (setq cands (counsel-etags-extract-cands tags-file "hello" nil))
-    (should (eq (length cands) 3))
+    (should (eq (length cands) 2))
     ;; the function in the external file is at the top
-    (should (string-match "test.js" (car (nth 2 cands))))
+    (should (string-match "test.js" (car (nth 1 cands))))
     ;; sort the candidate by string-distance from "hello.js"
     (let* ((f (get-full-path "test.js")))
-      (should (string-match "test.js" (car (nth 0 (counsel-etags-sort-candidates-maybe cands 3 nil f))))))))
+      (should (string-match "test.js"
+                            (car (nth 0 (counsel-etags-sort-candidates-maybe cands 3 f))))))))
 
 (ert-deftest counsel-etags-test-tags-file-cache ()
   (let* (cands
-         (tags-file (get-full-path "TAGS.test")))
+         (tags-file (get-full-path "tags-in-vim-format")))
     ;; clear cache
     (setq counsel-etags-cache nil)
     (setq cands (counsel-etags-extract-cands tags-file "hello" nil))
-    (should (eq (length cands) 3))
+    (should (eq (length cands) 2))
     ;; cache is filled
     (should counsel-etags-cache)
     (should (counsel-etags-cache-content tags-file))))
 
 (ert-deftest counsel-etags-test-tag-history ()
   (let* (cands
-         (tags-file (get-full-path "TAGS.test"))
+         (tags-file (get-full-path "tags-in-vim-format"))
          (dir (get-full-path "")))
     ;; clear history
     (setq counsel-etags-tag-history nil)
     (setq cands (counsel-etags-extract-cands tags-file "hello" nil))
-    (should (eq (length cands) 3))
+    (should (eq (length cands) 2))
     ;; only add tag when it's accessed by user manually
     (should (not counsel-etags-tag-history))
-    (setq cands (mapcar 'car cands))
     (dolist (c cands) (counsel-etags-remember c dir))
     (should counsel-etags-tag-history)
-    (should (eq (length counsel-etags-tag-history) 3))))
+    (should (eq (length counsel-etags-tag-history) 2))))
 
 (ert-run-tests-batch-and-exit)

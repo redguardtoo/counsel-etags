@@ -1,0 +1,5 @@
+hello	hello.js	/^function hello() {$/;"	f
+CHello	hello.js	/^export class CHello {$/;"	c
+hello	test.js	/^ hello() {$/;"	f
+test	hello.js	/^ test() {$/;"	f
+hi	hello.js	/^  hi() {$/;"	f

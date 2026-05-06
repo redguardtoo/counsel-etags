@@ -4,7 +4,7 @@
 
 ;; Author: Chen Bin
 ;; URL: http://github.com/redguardtoo/counsel-etags
-;; Package-Requires: ((emacs "29.1") (counsel "0.13.4"))
+;; Package-Requires: ((emacs "28.1") (counsel "0.15.1"))
 ;; Keywords: tools, convenience
 ;; Version: 1.10.1
 
@@ -79,7 +79,7 @@
 ;; - `counsel-etags-extra-tags-files' contains extra tags files to parse.
 ;;   Set it like,
 ;;     (setq counsel-etags-extra-tags-files
-;;           '("./TAGS" "/usr/include/TAGS" "$PROJ1/include/TAGS"))
+;;           '("./tags" "/usr/include/tags" "$PROJ1/include/tags"))
 ;;
 ;;   Files in `counsel-etags-extra-tags-files' should have symbols with absolute path only.
 ;;
@@ -89,7 +89,7 @@
 ;;      (push "build_clang" counsel-etags-ignore-directories)
 ;;      (push "build_clang" counsel-etags-ignore-directories)
 ;;      ;; counsel-etags-ignore-filenames supports wildcast
-;;      (push "TAGS" counsel-etags-ignore-filenames)
+;;      (push "tags" counsel-etags-ignore-filenames)
 ;;      (push "*.json" counsel-etags-ignore-filenames))
 ;;
 ;;  - Rust programming language is supported.
@@ -137,7 +137,7 @@
 ;;; Code:
 
 (require 'xref nil t) ; xref is optional
-(require 'etags)
+(require 'rx)
 (require 'cl-lib)
 (require 'find-file)
 (require 'ivy nil t)
@@ -148,11 +148,6 @@
 (defgroup counsel-etags nil
   "Complete solution to use ctags."
   :group 'tools)
-
-(defcustom counsel-etags-browse-url-function 'browse-url-generic
-  "The function to open url in tags file."
-  :group 'counsel-etags
-  :type 'function)
 
 (defcustom counsel-etags-ignore-config-files
   '(".gitignore"
@@ -174,7 +169,7 @@ If it's nil, a command using ctags is automatically created."
 
 A typical format is
 
-    (\"./TAGS\" \"/usr/include/TAGS\" \"$PROJECT/*/include/TAGS\")
+    (\"./tags\" \"/usr/include/tags\" \"$PROJECT/*/include/tags\")
 
 Environment variables can be inserted between slashes (`/').
 They will be replaced by their definition.  If a variable does
@@ -183,7 +178,7 @@ not exist, it is replaced (silently) with an empty string.
 Symbol location inside tags file should use absolute path.
 A CLI to create tags file:
 
-  find /usr/include | ctags -e -L -"
+  find /usr/include | ctags -L -"
   :group 'counsel-etags
   :type '(repeat string))
 
@@ -361,7 +356,7 @@ It's used by `counsel-etags-find-tag-name-default'."
   :group 'counsel-etags
   :type '(repeat string))
 
-(defcustom counsel-etags-project-file '("TAGS" "tags" ".svn" ".hg" ".git")
+(defcustom counsel-etags-project-file '("tags" "TAGS" ".svn" ".hg" ".git")
   "The file/directory used to locate project root directory.
 You can set up it in \".dir-locals.el\"."
   :group 'counsel-etags
@@ -372,7 +367,7 @@ You can set up it in \".dir-locals.el\"."
   :group 'counsel-etags
   :type 'string)
 
-(defcustom counsel-etags-tags-file-name "TAGS"
+(defcustom counsel-etags-tags-file-name "tags"
   "Tags file name."
   :group 'counsel-etags
   :type 'string)
@@ -403,7 +398,7 @@ Run \"ctags -x some-file\" to see the type in second column of output."
   :group 'counsel-etags
   :type '(repeat string))
 
-(defcustom counsel-etags-candidates-optimize-limit 256
+(defcustom counsel-etags-candidates-optimize-limit 1024
   "Sort candidates if its size is less than this variable's value.
 Candidates whose file path has Levenshtein distance to current file/directory.
 You may set it to nil to disable re-ordering for performance reason.
@@ -704,7 +699,7 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
      ;; Use ctags only
      (ctags-program
       (setq cmd
-            (format "%s %s %s -e %s %s -R %s"
+            (format "%s %s %s %s %s -R %s"
                     ctags-program
                     (mapconcat (lambda (p)
                                  (format "--exclude=\"*/%s/*\" --exclude=\"%s/*\""
@@ -736,9 +731,6 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
                             (counsel-etags-valid-ctags
                              (counsel-etags-guess-program "ctags"))))
          (default-directory src-dir)
-         ;; if both find and ctags exist, use both
-         ;; if only ctags exists, use ctags
-         ;; run find&ctags to create TAGS, `-print` is important option to filter correctly
          (cmd (counsel-etags-get-scan-command ctags-program))
          (tags-file (counsel-etags-get-tags-file-path src-dir)))
     (unless ctags-program
@@ -811,56 +803,6 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
       (setq start (+ start (length included))))
     (concat raw-content extra-content)))
 
-(defmacro counsel-etags--tset (table x y val row-width)
-  "Set TABLE cell at position (X, Y) with VAL and ROW-WIDTH."
-  `(aset ,table (+ ,x (* ,row-width ,y)) ,val))
-
-(defmacro counsel-etags--tref (table x y row-width)
-  "Get TABLE cell at position (X, Y) with ROW-WIDTH."
-  `(aref ,table (+ ,x (* ,row-width ,y))))
-
-(defun counsel-etags-levenshtein-distance (str1 str2 hash)
-  "Return the edit distance between strings STR1 and STR2.
-HASH store the previous distance."
-  (let* ((val (gethash str1 hash)))
-    (unless val
-      (let* ((length-str1 (length str1))
-             (length-str2 (length str2))
-             ;; it's impossible files name has more than 512 characters
-             (d (make-vector (* (1+ length-str1) (1+ length-str2)) 0))
-             ;; d is a table with lenStr2+1 rows and lenStr1+1 columns
-             (row-width (1+ length-str1))
-             (i 0)
-             (j 0))
-        ;; i and j are used to iterate over str1 and str2
-        (while (<= i length-str1) ;; for i from 0 to lenStr1
-          (counsel-etags--tset d i 0 i row-width) ;; d[i, 0] := i
-          (setq i (1+ i)))
-        (while (<= j length-str2) ;; for j from 0 to lenStr2
-          (counsel-etags--tset d 0 j j row-width) ;; d[0, j] := j
-          (setq j (1+ j)))
-        (setq i 1)
-        (while (<= i length-str1) ;; for i from 1 to lenStr1
-          (setq j 1)
-          (while (<= j length-str2) ;; for j from 1 to lenStr2
-            (let* ((cost
-                    ;; if str[i] = str[j] then cost:= 0 else cost := 1
-                    (if (equal (aref str1 (1- i)) (aref str2 (1- j))) 0 1))
-                   ;; d[i-1, j] + 1     // deletion
-                   (deletion (1+ (counsel-etags--tref d (1- i) j row-width)))
-                   ;; d[i, j-1] + 1     // insertion
-                   (insertion (1+ (counsel-etags--tref d i (1- j) row-width)))
-                   ;; d[i-j,j-1] + cost // substitution
-                   (substitution (+ (counsel-etags--tref d (1- i) (1- j) row-width) cost))
-                   (distance (min insertion deletion substitution)))
-              (counsel-etags--tset d i j distance row-width)
-              (setq j (1+ j))))
-          (setq i (1+ i))) ;; i++
-        ;; return d[lenStr1, lenStr2] or the max distance
-        (setq val (counsel-etags--tref d length-str1 length-str2 row-width))
-        (puthash str1 val hash)))
-    val))
-
 (defun counsel-etags--strip-path (path strip-count)
   "Strip PATH with STRIP-COUNT."
   (let* ((i (1- (length path))))
@@ -872,10 +814,9 @@ HASH store the previous distance."
     (if (= 0 strip-count) (substring path (+ 1 i))
       path)))
 
-(defun counsel-etags-sort-candidates-maybe (cands strip-count is-string current-file)
+(defun counsel-etags-sort-candidates-maybe (cands strip-count current-file)
   "Sort CANDS by string distance.
 STRIP-COUNT strips the string before calculating distance.
-IS-STRING is t if the candidate is string.
 CURRENT-FILE is used to compare with candidate path."
   (let* ((ref (and current-file (counsel-etags--strip-path current-file strip-count))))
     (cond
@@ -885,27 +826,15 @@ CURRENT-FILE is used to compare with candidate path."
           (>= (length cands) counsel-etags-candidates-optimize-limit))
       cands)
 
-     ; sort in C
-     ((fboundp 'string-distance)
-      ;; Emacs 27 `string-distance' is much faster than Lisp implementation.
-      (sort cands
-            `(lambda (item1 item2)
-               (let* ((a (counsel-etags--strip-path (expand-file-name (if ,is-string item1 (cadr item1))) ,strip-count))
-                      (b (counsel-etags--strip-path (expand-file-name (if ,is-string item2 (cadr item2))) ,strip-count)))
-                 (< (string-distance a ,ref t)
-                    (string-distance b ,ref t))))))
-
-     ;; sort in Lisp. It's slow so `counsel-etags-candidates-optimize-limit'
-     ;; limits the maximum number of candidates to be sorted
      (t
-      (let* ((h (make-hash-table :test 'equal)))
-        (sort cands
-              `(lambda (item1 item2)
-                 (let* ((a (counsel-etags--strip-path (expand-file-name (if ,is-string item1 (cadr item1))) ,strip-count))
-                        (b (counsel-etags--strip-path (expand-file-name (if ,is-string item2 (cadr item2))) ,strip-count)))
-                   (< (counsel-etags-levenshtein-distance a ,ref ,h)
-                      (counsel-etags-levenshtein-distance b ,ref ,h))))))))))
+      (sort cands
+            :lessp
+            `(lambda (item1 item2)
+               (let* ((a (counsel-etags--strip-path (plist-get (cdr item1) :fullpath ) ,strip-count))
 
+                      (b (counsel-etags--strip-path (plist-get (cdr item2) :fullpath) ,strip-count)))
+                 (< (string-distance a ,ref t)
+                    (string-distance b ,ref t)))))))))
 
 (defun counsel-etags-cache-invalidate (tags-file)
   "Invalidate the cache of TAGS-FILE."
@@ -928,59 +857,106 @@ CURRENT-FILE is used to compare with candidate path."
 (defun counsel-etags-build-cand (info)
   "Build tag candidate from INFO.
 If SHOW-ONLY-TEXT is t, the candidate shows only text."
-  (let* ((file (plist-get info :file))
-         (lnum (plist-get info :line-number))
-         (text (plist-get info :text))
-         (tagname (plist-get info :tagname))
-         (head (format "%s:%s:%s" file lnum text)))
-    (cons head
-          (list file lnum tagname))))
+  (cons (format "%s:%s:%s"
+                (plist-get info :kind)
+                (plist-get info :file)
+                (plist-get info :text))
+        info))
 
-(defmacro counsel-etags-push-one-candidate (cands tagname-re bound root-dir)
+(defun counsel-etags-excmd-display-text (excmd)
+  "Return human-readable text extracted from Vim ctags EXCMD."
+  (cond
+   ;; line number
+   ((and (string-match "^[0-9]+$" excmd)
+         (= (match-beginning 0) 0))
+    (format "line %s" excmd))
+
+   ;; /pattern/
+   ((string-match "^/\\(.*\\)/$" excmd)
+    (let ((pat (match-string 1 excmd)))
+      ;; remove ^ and $ at boundaries
+      (setq pat (replace-regexp-in-string "^\\^" "" pat))
+      (setq pat (replace-regexp-in-string "\\$$" "" pat))
+      pat))
+
+   ;; fallback
+   (t excmd)))
+
+(defmacro counsel-etags-get-one-candidate (tagname-re bound root-dir)
   "Push new candidate into CANDS.
 Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
-    `(cond
-      ((re-search-forward ,tagname-re ,bound t)
-       (let* ((line-number (match-string-no-properties 3))
-              (text (match-string-no-properties 1))
-              ;; file must be set after above variables
-              (file (etags-file-of-tag t))
-              (cand (list :file file ; relative path
-                          :fullpath (if (file-name-absolute-p file) file
-                                      (concat ,root-dir file)) ; absolute path
-                          :line-number line-number
-                          :text text
-                          :tagname (match-string-no-properties 2))))
-         ;; if root-dir is nil, only one file is processed.
-         ;; So don't bother about file path
-         (push (counsel-etags-build-cand cand) ,cands))
-       t)
-      (t
-       ;; need push cursor forward
-       (end-of-line)
-       nil)))
+  `(cond
+    ((re-search-forward ,tagname-re ,bound t)
+     (let* ((ta (match-string-no-properties 1))
+            ;; file must be set after above variables
+            (file (match-string-no-properties 2))
+            (excmd (match-string-no-properties 3))
+            (kind (match-string-no-properties 4))
+            (text (counsel-etags-excmd-display-text excmd))
+            (cand (list :file file ; relative path
+                        :fullpath (if (file-name-absolute-p file) file
+                                    (concat ,root-dir file)) ; absolute path
+                        :excmd excmd
+                        :text text
+                        :kind kind
+                        :tagname ta)))
+       ;; if root-dir is nil, only one file is processed.
+       ;; So don't bother about file path
+       (counsel-etags-build-cand cand)))
+    (t
+     ;; need push cursor forward
+     (end-of-line)
+     nil)))
 
 (defmacro counsel-etags-scan-string (str tagname-re case-sensitive &rest body)
   "Scan STR using TAGNAME-RE and CASE-SENSITIVE and call BODY to push results."
   `(with-temp-buffer
     (insert ,str)
-    ;; Not sure why `modify-syntax-entry' is used
-    ;; Code is from https://www.emacswiki.org/emacs/etags-select.el
-    (modify-syntax-entry ?_ "w")
     (goto-char (point-min))
     (let* ((case-fold-search ,case-sensitive))
       ;; normal tag search algorithm
       (while (re-search-forward ,tagname-re nil t)
-        ,@body))
-    ;; clean up, copied from "etags-select.el"
-    (modify-syntax-entry ?_ "_")))
-
+        ,@body))))
 
 (defun counsel-etags-search-regex (tagname)
-  "Get regex to search TAGNAME which could be nil."
-  (concat "\\([^\177\001\n]+\\)\177\\("
-          (or tagname "[^\177\001\n]+")
-          "\\)\001\\([0-9]+\\),\\([0-9]+\\)"))
+  "Return regex to match a Vim ctags line containing TAGNAME using rx."
+  (rx-to-string
+   `(seq line-start
+         ;; Group 1: Tag Name
+         (group ,(or tagname '(one-or-more (not (any "\t")))))
+         "\t"
+         ;; Group 2: Filename (changed to one-or-more)
+         (group (one-or-more (not (any "\t"))))
+         "\t"
+         ;; Group 3: Ex-command (the search pattern or line number)
+         (group (+? any))
+         ";\""
+         ;; Group 4: Kind (made optional and more flexible for trailing fields)
+         (zero-or-more whitespace)
+         (group (any "a-zA-Z"))
+         ;; Allow for extra fields like line:42 or class:X
+         (zero-or-more any)
+         line-end)))
+
+(defun counsel-etags-apply-excmd (excmd)
+  "Jump according to Vim ctags EXCMD."
+  (cond
+   ;; line number
+   ((and (string-match "^[0-9]+$" excmd)
+         (= (match-beginning 0) 0))
+    (goto-char (point-min))
+    (forward-line (1- (string-to-number excmd))))
+
+   ;; /pattern/
+   ((string-match "^/\\([^/]*\\)/$" excmd)
+    (let ((pat (match-string 1 excmd)))
+      (goto-char (point-min))
+      (re-search-forward pat)))
+
+   ;; fallback
+   (t
+    (goto-char (point-min))
+    (re-search-forward (regexp-quote excmd) nil t))))
 
 (defun counsel-etags-extract-cands (tags-file tagname fuzzy)
   "Parse TAGS-FILE to find occurrences of TAGNAME using FUZZY algorithm."
@@ -998,7 +974,7 @@ Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
     ;; update cache by reading from physical file.
     ;; Not precise but acceptable algorithm.
     (when (and tags-file (file-exists-p tags-file)
-               ;; TAGS file is smaller when being created.
+               ;; tags file is smaller when being created.
                ;; Do NOT load incomplete tags file
                (< (counsel-etags-cache-filesize tags-file)
                   (setq file-size (nth 7 (file-attributes tags-file)))))
@@ -1017,15 +993,22 @@ Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
 
     (when (and tags-file
                (setq file-content (counsel-etags-cache-content tags-file)))
-      (counsel-etags-scan-string file-content
-                                 tagname
-                                 fuzzy
-                                 (progn
-                                   (beginning-of-line)
-                                   (counsel-etags-push-one-candidate cands
-                                                                     tagname-re
-                                                                     (line-end-position)
-                                                                     root-dir))))
+      (with-temp-buffer
+        (insert file-content)
+        (goto-char (point-min))
+        (let* ((case-fold-search fuzzy)
+               c)
+          ;; normal tag search algorithm
+          (while (re-search-forward tagname nil t) ; find line start with tagname
+            (beginning-of-line)
+            (setq c (counsel-etags-get-one-candidate tagname-re
+                                                     (line-end-position)
+                                                     root-dir))
+
+            (when (and c
+                       ;; partial match in fuzzy mode per `tagname-re'
+                       (string-match tagname (plist-get (cdr c) :tagname)))
+              (push c cands))))))
     (and cands (nreverse cands))))
 
 (defun counsel-etags-collect-cands (tagname fuzzy current-file &optional dir)
@@ -1043,7 +1026,7 @@ Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
     (when counsel-etags-debug
       (message "counsel-etags-collect-cands called. tags-file=%s cands=%s" tags-file cands))
     ;; current-file is used to calculated string distance.
-    (setq rlt (mapcar 'car (counsel-etags-sort-candidates-maybe cands 3 nil current-file)))
+    (setq rlt (counsel-etags-sort-candidates-maybe cands 3 current-file))
     (when counsel-etags-extra-tags-files
       ;; don't sort candidate from 3rd party libraries
       (dolist (file (ff-list-replace-env-vars counsel-etags-extra-tags-files))
@@ -1053,7 +1036,7 @@ Use TAGNAME-RE to search in current buffer with BOUND in ROOT-DIR."
                                                        tagname
                                                        fuzzy))
           ;; don't bother sorting candidates from third party tags file
-          (setq rlt (append rlt (mapcar 'car cands))))))
+          (setq rlt (append rlt cands)))))
     (unless (> (length rlt) counsel-etags-maximum-candidates-to-clean)
       (setq rlt (delq nil (delete-dups rlt))))
     rlt))
@@ -1089,13 +1072,6 @@ So we need *encode* the string."
         (or (counsel-etags-selected-str)
             (funcall counsel-etags-find-tag-name-function))))
 
-(defun counsel-etags-forward-line (lnum)
-  "Forward LNUM lines."
-  (setq lnum (string-to-number lnum))
-  (when (and lnum (> lnum 0))
-    (goto-char (point-min))
-    (forward-line (1- lnum))))
-
 ;;;###autoload
 (defun counsel-etags-push-marker-stack ()
   "Save current position."
@@ -1115,52 +1091,52 @@ So we need *encode* the string."
 (defun counsel-etags-open-file-api (item dir &optional tagname)
   "Open ITEM while `default-directory' is DIR.
 Focus on TAGNAME if it's not nil."
+  (when counsel-etags-debug
+    (message "counsel-etags-open-file-api called => %s" item))
   ;; jump
   (let* ((is-str (and (stringp item)
                       (string-match "\\`\\(.*?\\):\\([0-9]+\\):\\(.*\\)\\'"
                                     item)))
          (file (if is-str (match-string-no-properties 1 item)
-                 (nth 0 item)))
-         (linenum (if is-str (match-string-no-properties 2 item)
-                    (nth 1 item)))
-         ;; always calculate path relative to TAGS
+                 (plist-get (cdr item) :fullpath)))
+         ;; excmd could be just line number (string type)
+         (excmd (if is-str (match-string-no-properties 2 item)
+                    (plist-get (cdr item) :excmd)))
+         ;; always calculate path relative to tags
          (default-directory dir))
 
     (when counsel-etags-debug
-      (message "counsel-etags-open-file-api called => dir=%s, linenum=%s, file=%s" dir linenum file))
+      (message "counsel-etags-open-file-api called => is-str=%s dir=%s, excmd=%s, file=%s" is-str dir excmd file))
 
     ;; item's format is like '~/proj1/ab.el:39: (defun hello() )'
     (counsel-etags-push-marker-stack)
 
-    (cond
-     ;; file is actually a url template
-     ((string-match "^https?://" file)
-      (funcall counsel-etags-browse-url-function (format file tagname)))
+    ;; open file, go to certain line
+    (find-file file)
+    (counsel-etags-apply-excmd excmd)
 
-     (t
-      ;; open file, go to certain line
-      (find-file file)
-      (counsel-etags-forward-line linenum)
-
-      ;; move focus to the tagname
-      (beginning-of-line)
-      ;; search tagname in current line might fail
-      ;; maybe tags files is updated yet
-      (when (and tagname
-                 ;; focus on the tag if possible
-                 (re-search-forward tagname (line-end-position) t))
+    ;; move focus to the tagname
+    (beginning-of-line)
+    ;; search tagname in current line might fail
+    ;; maybe tags files is updated yet
+    (when (and tagname
+               ;; focus on the tag if possible
+               (re-search-forward tagname (line-end-position) t))
         (goto-char (match-beginning 0)))
 
       ;; flash, Emacs v25 only API
-      (xref-pulse-momentarily)))))
+      (xref-pulse-momentarily)))
 
 
 (defun counsel-etags-remember (cand dir)
   "Remember CAND whose `default-directory' is DIR."
   (setq counsel-etags-tag-history
-        (cl-remove-if `(lambda (s) (string= ,cand (car s)))
+        (cl-remove-if (lambda (s)
+                        (string= (car cand) (car s)))
                       counsel-etags-tag-history))
-  (push (cons cand dir) counsel-etags-tag-history))
+  (let* ((v (cdr cand)))
+    (plist-put v :tags-file-diectory dir)
+    (push (cons (car cand) v) counsel-etags-tag-history)))
 
 (defun counsel-etags--time-cost (start-time)
   "Show time cost since START-TIME."
@@ -1172,12 +1148,14 @@ Focus on TAGNAME if it's not nil."
 (defun counsel-etags-open-tag-cand (tagname cands time)
   "Find TAGNAME from CANDS.  Open tags file at TIME."
   ;; mark current point for `pop-tag-mark'
+  (when counsel-etags-debug
+    (message "counsel-etags-open-tag-cand called => %s %s %s" tagname cands time))
   (let* ((dir (counsel-etags-tags-file-directory)))
     (cond
      ((= 1 (length cands))
       ;; open the file directly
-      (counsel-etags-remember (car cands) dir)
-      (counsel-etags-open-file-api (car cands)
+      (counsel-etags-remember (nth 0 cands) dir)
+      (counsel-etags-open-file-api (nth 0 cands)
                                    dir
                                    tagname))
      (t
@@ -1186,9 +1164,7 @@ Focus on TAGNAME if it's not nil."
                 cands
                 :action `(lambda (e)
                            (counsel-etags-remember e ,dir)
-                           (counsel-etags-open-file-api e
-                                                        ,dir
-                                                        ,tagname))
+                           (counsel-etags-open-file-api e ,dir ,tagname))
                 :caller 'counsel-etags-find-tag
                 :keymap counsel-etags-find-tag-map)))))
 
@@ -1207,7 +1183,7 @@ Focus on TAGNAME if it's not nil."
         (counsel-etags-scan-dir src-dir)
         (setq tags-file (counsel-etags-get-tags-file-path src-dir)))
        (t
-        (error "Can't find TAGS.  Please run `counsel-etags-scan-code'!"))))
+        (error "Can't find tags.  Please run `counsel-etags-scan-code'!"))))
     ;; the tags file IS touched
     (when tags-file
       (counsel-etags-add-tags-file-to-history tags-file))))
@@ -1332,8 +1308,8 @@ Tags might be sorted by comparing tag's path with CURRENT-FILE."
                    (counsel-etags-list-tag-function s ,current-file))
                 :history 'counsel-git-grep-history
                 :dynamic-collection t
-                :action `(lambda (e)
-                           (counsel-etags-open-file-api e ,dir))
+                :action (lambda (e)
+                          (counsel-etags-open-file-api e dir))
                 :caller 'counsel-etags-find-tag
                 :keymap counsel-etags-find-tag-map))
 
@@ -1405,15 +1381,12 @@ Tags might be sorted by comparing tag's path with CURRENT-FILE."
       ;; (cons name (if imenu-use-markers (point-marker) (point)))
       (setq cands (counsel-etags-imenu-scan-string (shell-command-to-string cmd)))
 
-      ;; cands contains list of name and line number
-      ;; Example of cands:
-      ;;  (setq cands (list (cons "hello" "5")))
       ;; we need convert it into imenu items (name . marker)
       (save-excursion
         (dolist (c cands)
           (let* ((name (car c)))
             (goto-char (point-min))
-            (counsel-etags-forward-line (cdr c))
+            (counsel-etags-apply-excmd (plist-get (cdr c) :excmd))
             (when (search-forward name (line-end-position) t)
               (forward-char (- (length name))))
             (push (cons name (point-marker)) imenu-items))))
@@ -1472,14 +1445,17 @@ That's the known issue of Emacs Lisp.  The program itself is perfectly fine."
    (t
     (let* ((dir (counsel-etags-tags-file-directory))
            ;; filter the recent tags from this project
-           (collection (delq nil (mapcar
-                                  (lambda (e) (if (string= dir (cdr e)) e))
-                           counsel-etags-tag-history))))
+           (collection (delq nil
+                             (mapcar
+                              (lambda (e)
+                                (when (string= dir (plist-get (cdr e) :tags-file-diectory))
+                                  e))
+                              counsel-etags-tag-history))))
       (when collection
         (ivy-read "Recent tag names: "
                   collection
-                  :action `(lambda (e)
-                             (counsel-etags-open-file-api (car e) (cdr e)))
+                  :action (lambda (e)
+                            (counsel-etags-open-file-api e dir))
                   :caller 'counsel-etags-recent-tag))))))
 
 ;;;###autoload
@@ -1511,9 +1487,12 @@ The tags updating might not happen."
         ;; start updating
         (if counsel-etags-debug (message "counsel-etags-virtual-update-tags actually happened."))
 
-        (let* ((dir (file-name-directory (expand-file-name (counsel-etags-locate-tags-file)))))
-          (if counsel-etags-debug (message "update tags in %s" dir))
-          (funcall counsel-etags-update-tags-backend dir)))
+        (let* ((tags-file (counsel-etags-locate-tags-file))
+               dir)
+          (when (and tags-file (file-exists-p tags-file))
+            (setq dir (file-name-directory (expand-file-name tags-file)))
+            (if counsel-etags-debug (message "update tags in %s" dir))
+            (funcall counsel-etags-update-tags-backend dir))))
 
        (t
         ;; do nothing, can't run ctags too often
@@ -1650,8 +1629,7 @@ final result set of the negation regexp."
                    "Regular expression for grep: "
                  "Keyword for searching: ")))
 
-  (let* ((text (if default-keyword default-keyword
-                  (counsel-etags-read-keyword hint)))
+  (let* ((text (or default-keyword (counsel-etags-read-keyword hint)))
          (keyword (funcall counsel-etags-convert-grep-keyword text))
          (default-directory (expand-file-name (or root
                                                   (counsel-etags-org-entry-get-project-root)
@@ -1667,13 +1645,13 @@ final result set of the negation regexp."
                counsel-etags-sort-grep-result-p
                counsel-etags-candidates-optimize-limit
                ;; string-distance is faster
-               (< (length cands) (* 4 counsel-etags-candidates-optimize-limit))
-               (fboundp 'string-distance))
+               (< (length cands) counsel-etags-candidates-optimize-limit))
       ;; grep should not waste time on lisp version of string distance
       ;; So `string-distance' from Emacs 27 is required
       (let* ((ref (file-relative-name buffer-file-name root)))
         (setq cands
               (sort cands
+                    :lessp
                     `(lambda (a b)
                        (< (string-distance (car (split-string a ":")) ,ref t)
                           (string-distance (car (split-string b ":")) ,ref t)))))))

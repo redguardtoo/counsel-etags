@@ -38,6 +38,7 @@ abbrev_defs
 /swank
 /swank
 /.mc-lists.el
+tags
 TAGS
 GTAGS
 GPATH
