@@ -17,13 +17,11 @@ It's been tested on Linux/Windows/macOS.
   - [[#native-windows-emacs][Native Windows Emacs]]
   - [[#gitignore-and-hgignore-are-respected][".gitignore" and ".hgignore" are respected]]
   - [[#set-up-with-use-package][Set up with use-package]]
-  - [[#insert-extra-content-into-tags-file-after-its-updated][Insert extra content into tags file after it's updated]]
   - [[#ignore-directories-and-files][Ignore directories and files]]
   - [[#dependency-on-emacs-apis-is-minimum][Dependency on Emacs APIs is minimum]]
   - [[#specify-multiple-tags-files][Specify multiple tags files]]
   - [[#auto-update-tags-file][Auto update tags file]]
   - [[#rust-programming-language][Rust programming language]]
-  - [[#list-all-tags][List all tags]]
   - [[#two-step-tag-matching-using-regular-expression-and-filter][Two-step tag matching using regular expression and filter]]
   - [[#force-update-current-tags-file][Force update current tags file]]
   - [[#open-recent-tag][Open recent tag]]
@@ -31,7 +29,6 @@ It's been tested on Linux/Windows/macOS.
   - [[#grep-program][Grep program]]
   - [[#customize-grep-keyword][Customize grep keyword]]
   - [[#windows][Windows]]
-  - [[#use-ctags-to-generate-imenu-items][Use Ctags to generate Imenu items]]
 - [[#step-by-step-guide][Step by step guide]]
   - [[#step-1-a-toy-c-project][Step 1, a toy C project]]
   - [[#step-2-navigate-code][Step 2, navigate code]]
@@ -84,30 +81,6 @@ Please place =add-hook= code inside =:init= section,
   (setq counsel-etags-update-interval 60)
   (push "build" counsel-etags-ignore-directories))
 #+end_src
-** Insert extra content into tags file after it's updated
-=counsel-etags-find-tag-name-function= finds tag name at point. If it returns nil, =find-tag-default= is used. =counsel-etags-word-at-point= returns the word at point.
-
-User could append the extra content into tags file in =counsel-etags-after-update-tags-hook=.
-
-The parameter of hook function is full path of the tags file.
-
-=counsel-etags-tag-line= and =counsel-etags-append-to-tags-file= are helper functions to update tags file in the hook,
-
-Sample code to append native javascript API "addEventListener", "dispatchEvent", "removeEventListener" into tags file,
-#+begin_src elisp
-(defun my-update-tags-file (tags-file)
-  "Update TAGS-FILE."
-  (when (memq major-mode '(js-mode typescript-mode js2-mode))
-    (let ((s3 (mapconcat (lambda (tagname)
-                           (counsel-etags-tag-line tagname tagname 0))
-                         '(addEventListener
-                           dispatchEvent
-                           removeEventListener) "")))
-      (counsel-etags-append-to-tags-file
-       (list (cons "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/%s" s3))
-       tags-file))))
-(add-hook 'counsel-etags-after-update-tags-hook 'my-update-tags-file)
-#+end_src
 ** Ignore directories and files
 You can set up =counsel-etags-ignore-directories= and =counsel-etags-ignore-filenames=,
 #+begin_src elisp
@@ -159,8 +132,6 @@ The easiest way to set up rusty-tags per project is to create [[https://www.gnu.
 ((nil . ((counsel-etags-update-tags-backend . (lambda (src-dir) (shell-command "rusty-tags emacs")))
          (counsel-etags-tags-file-name . "rusty-tags.emacs"))))
 #+end_src
-** List all tags
-=M-x counsel-etags-list-tag=
 ** Two-step tag matching using regular expression and filter
 =M-x counsel-etags-find-tag=
 ** Force update current tags file
@@ -218,19 +189,7 @@ Or create a new grep command =my-grep-by-pinyin=,
 ** Windows
 Installing Cygwin and its package Ctags on any driver is all you need to do. No extra setup is required.
 
-But you could still set up =counsel-etags-find-program=, =counsel-etags-ctags-program=, and =counsel-etags-grep-program= to specify the command line program path.
-** Use Ctags to generate Imenu items
-Run =M-x counsel-etags-list-tag-in-current-file= to list tags in current file.
-
-You can also use native imenu command with below setup,
-#+begin_src elisp
-(setq imenu-create-index-function 'counsel-etags-imenu-default-create-index-function)
-#+end_src
-
-Set =counsel-etags-imenu-excluded-names= to exclude imenu items by name.
-
-Set =counsel-etags-imenu-excluded-types to exclude imenu items by type.
-
+But you could still set up =counsel-etags-ctags-program=, and =counsel-etags-grep-program= to specify the command line program path.
 * Step by step guide
 You need use Linux/Cygwin/MSYS2. It should be similar in macOS but I'm not sure whether the directory =/usr/include= exists.
 
