@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "28.1") (counsel "0.15.1"))
 ;; Keywords: tools, convenience
-;; Version: 2.0.0
+;; Version: 2.0.1
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -113,7 +113,7 @@
 ;;  cli options as "--exclude="@/ignore/file/path".
 ;;  Set `counsel-etags-ignore-config-files' to nil to turn off this feature.
 ;;
-;;  - Only universal ctags is supported since v2.0.0
+;;  - Only universal ctags is supported since version 2
 
 ;;  - Grep result is sorted by string distance of current file path and candidate file path.
 ;;  The sorting happens in Emacs 27+.
@@ -514,7 +514,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "2.0.0"))
+  (message "2.0.1"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -1553,11 +1553,8 @@ If FORCED-TAGS-FILE is nil, the updating process might now happen."
 ;; {{ occur setup
 (defun counsel-etags-tag-occur-api (items)
   "Create occur buffer for ITEMS."
-  (message "b major-mode=%s" major-mode)
   (unless (eq major-mode 'ivy-occur-grep-mode)
     (ivy-occur-grep-mode))
-  (message "major-mode=%s" major-mode)
-  (message "(buffer-string)=%s" (buffer-string))
   ;; we use regex in elisp, don't unquote regex
   (let ((cands (ivy--filter ivy-text items)))
     (when buffer-read-only

@@ -8,7 +8,7 @@ It only requires Universal Ctags.
 
 It's been tested on Linux/Windows/macOS.
 
-Important changes since 2.0.0,
+Important changes since 2.0.1,
 - Only Universal Ctags is supported
 - Support for Emacs Etags is dropped. Only Vim tags file is supported. Vim tags file is more powerful and versatile.
 It means you should never append option "-e" to Ctags cli when generating tags file.
