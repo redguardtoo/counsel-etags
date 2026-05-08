@@ -4,9 +4,9 @@
 
 ;; Author: Chen Bin
 ;; URL: http://github.com/redguardtoo/counsel-etags
-;; Package-Requires: ((emacs "29.1") (counsel "0.15.1"))
+;; Package-Requires: ((emacs "28.1") (counsel "0.15.1"))
 ;; Keywords: tools, convenience
-;; Version: 2.0.2
+;; Version: 2.0.3
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -514,7 +514,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "2.0.2"))
+  (message "2.0.3"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -788,7 +788,6 @@ CURRENT-FILE is used to compare with candidate path."
 
      (t
       (sort cands
-            :lessp
             `(lambda (item1 item2)
                (let* ((a (counsel-etags--strip-path (plist-get (cdr item1) :fullpath ) ,strip-count))
 
@@ -1495,7 +1494,6 @@ final result set of the negation regexp."
       (let* ((ref (file-relative-name buffer-file-name root)))
         (setq cands
               (sort cands
-                    :lessp
                     `(lambda (a b)
                        (< (string-distance (car (split-string a ":")) ,ref t)
                           (string-distance (car (split-string b ":")) ,ref t)))))))
