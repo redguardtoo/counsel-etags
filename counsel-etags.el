@@ -514,7 +514,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "2.0.4))
+  (message "2.0.4"))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
