@@ -6,7 +6,7 @@
 ;; URL: http://github.com/redguardtoo/counsel-etags
 ;; Package-Requires: ((emacs "28.1") (counsel "0.15.1"))
 ;; Keywords: tools, convenience
-;; Version: 2.0.3
+;; Version: 2.0.4
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -514,7 +514,7 @@ Return nil if it's not found."
 ;;;###autoload
 (defun counsel-etags-version ()
   "Return version."
-  (message "2.0.3"))
+  (message "2.0.4))
 
 ;;;###autoload
 (defun counsel-etags-get-hostname ()
@@ -750,18 +750,9 @@ If CODE-FILE is a real file, the command scans it and output to stdout."
 
 (defun counsel-etags-read-file (file)
   "Return FILE content with child files included."
-  (let* ((raw-content (counsel-etags-read-internal file))
-         (start 0)
-         (re "^\\([^,]+\\),include$")
-         included
-         (extra-content ""))
-    (while (setq start (string-match re raw-content start))
-      (when (file-exists-p (setq included (match-string 1 raw-content)))
-        (setq extra-content (concat extra-content
-                                    "\n"
-                                    (counsel-etags-read-internal included))))
-      (setq start (+ start (length included))))
-    (concat raw-content extra-content)))
+  (let* ((raw-content (counsel-etags-read-internal file)))
+    ;; vim tags doesn't support "include"
+    raw-content))
 
 (defun counsel-etags--strip-path (path strip-count)
   "Strip PATH with STRIP-COUNT."
