@@ -371,12 +371,6 @@ If `string-distance' exists, sorting happens and this variable is ignored."
   :group 'counsel-etags
   :type 'boolean)
 
-(defcustom counsel-etags-max-file-size 512
-  "Ignore files bigger than `counsel-etags-max-file-size' kilobytes.
-This option is ignored if GNU find is not installed."
-  :group 'counsel-etags
-  :type 'integer)
-
 (defcustom counsel-etags-after-update-tags-hook nil
   "Hook after tags file is actually updated.
 The parameter of hook is full path of the tags file."
